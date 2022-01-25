@@ -1,0 +1,36 @@
+{
+  "name": "rapix",
+  "version": "0.6.0",
+  "description": "Javascript API consumer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexkevlar/rapix.git"
+  },
+  "keywords": [
+    "api",
+    "api consumer",
+    "consumer",
+    "fetch api",
+    "http request",
+    "xhr",
+    "ajax",
+    "promise"
+  ],
+  "author": "Alessandro Pano (https://www.linkedin.com/in/alessandropano/)",
+  "license": "ISC",
+  "homepage": "https://github.com/alexkevlar/rapix#readme",
+  "bugs": {
+    "url": "https://github.com/alexkevlar/rapix/issues"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.5"
+  },
+  "dependencies": {
+    "traverse-remap": "^1.0.6"
+  }
+}
