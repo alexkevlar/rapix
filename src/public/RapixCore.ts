@@ -12,22 +12,22 @@ interface failOption {
 
 interface endpointOptions {
   url: string,
-  method?: 'GET'|'POST'|'PUT'|'DELETE'|'PATCH',
-  headers?: {[key: string]:any},
-  body?: {[key: string]:any},
-  cacheToClearAfter?: Array<string>|string,
-  onSuccess?: (responseData?:object, response?:any) => void,
-  retryIf?: (responseData?:object, response?:any) => boolean,
-  test?: (data:object) => void,
-  always?: (responseData?:object, response?:any) => void,
-  onError?: (error?: object, response?:any) => void,
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+  headers?: { [key: string]: any },
+  body?: { [key: string]: any },
+  cacheToClearAfter?: Array<string> | string,
+  onSuccess?: (responseData?: object, response?: any) => void,
+  retryIf?: (responseData?: object, response?: any) => boolean,
+  test?: (data: object) => void,
+  always?: (responseData?: object, response?: any) => void,
+  onError?: (error?: object, response?: any) => void,
   mock?: {
-    success: {status?: number, [key: string]: any},
+    success: { status?: number, [key: string]: any },
     fail?: failOption,
     forceFail?: boolean,
     ping?: [number, number?] | number
   },
-  transformResponse?: (response: {[key: string]:any}) => object,
+  transformResponse?: (response: { [key: string]: any }) => object,
   cacheTime?: number,
   timeout?: number
 }
@@ -45,19 +45,19 @@ interface configOptions {
   debug?: boolean,
   cache?: boolean,
   cacheTime?: number,
-  validateStatus?: (status:number) => boolean,
-  transformResponse?: (r:any) => {},
+  validateStatus?: (status: number) => boolean,
+  transformResponse?: (r: any) => {},
   timeout?: number
 }
 
 export interface APIOptions {
   settings: (params?: any) => configOptions,
-  collection: { [key: string]: (props?:any) => endpointOptions }
+  collection: { [key: string]: (props?: any) => endpointOptions }
 }
 
 const fn = {
 
-  randomIntFromInterval(min:number, max?:number) { // min and max included
+  randomIntFromInterval(min: number, max?: number) { // min and max included
     if (!max) max = min;
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
@@ -86,7 +86,7 @@ const configOptionsDefaults: configOptions = {
   fetchRemote: true,
   cache: false,
   cacheTime: 300,
-  validateStatus: (status:number) => {
+  validateStatus: (status: number) => {
     return status >= 200 && status < 300;
   },
   timeout: 0
@@ -129,11 +129,11 @@ export class API_class {
 
     },
 
-    remove: (endpoint = '', method = '', sentData = {}):any => delete this.pendingPromise.store[endpoint + '||' + JSON.stringify(sentData)],
+    remove: (endpoint = '', method = '', sentData = {}): any => delete this.pendingPromise.store[endpoint + '||' + JSON.stringify(sentData)],
 
     get: (endpoint = '', method = '', sentData = {}) => this.pendingPromise.store[endpoint + '||' + JSON.stringify(sentData)],
 
-    set: (endpoint = '', method = '', sentData = {}, promise: any):any => {
+    set: (endpoint = '', method = '', sentData = {}, promise: any): any => {
       if (typeof sentData === 'object') {
         const sData = endpoint + '||' + JSON.stringify(sentData);
         if (!this.pendingPromise.store[sData]) this.pendingPromise.store[sData] = promise;
@@ -148,7 +148,12 @@ export class API_class {
     this.collection = {};
 
     const {settings, collection} = props;
-    const {cacheTime = configOptionsDefaults.cacheTime, cache, debug = false, timeout = configOptionsDefaults.timeout} = settings();
+    const {
+      cacheTime = configOptionsDefaults.cacheTime,
+      cache,
+      debug = false,
+      timeout = configOptionsDefaults.timeout
+    } = settings();
 
     const Cache = new ApiCache({defaultCacheTimeInSeconds: cacheTime, enabled: cache === true});
 
@@ -157,13 +162,37 @@ export class API_class {
       return {url, method, apiName, headers, body};
     }
 
-    this.fetchAPI = ({url, signalCallback, method = 'GET', headers, body, mock, test, apiName, cacheTime, cacheToClearAfter = [], onError, onSuccess, always, transformResponse, retryIf}) => {
+    this.fetchAPI = ({
+                       url,
+                       signalCallback,
+                       method = 'GET',
+                       headers,
+                       body,
+                       mock,
+                       test,
+                       apiName,
+                       cacheTime,
+                       cacheToClearAfter = [],
+                       onError,
+                       onSuccess,
+                       always,
+                       transformResponse,
+                       retryIf
+                     }) => {
 
       const startTime = new Date();
 
-      const responseData = (response: object, isCache:boolean = false) => {
+      const responseData = (response: object, isCache: boolean = false) => {
 
         const time = new Date();
+
+        const ApiSettings = settings();
+
+        if (typeof transformResponse === 'function') {
+          response = transformResponse(response);
+        } else if (typeof ApiSettings.transformResponse === 'function') {
+          response = ApiSettings.transformResponse(response);
+        }
 
         return {
           ...response, ...{
@@ -184,7 +213,7 @@ export class API_class {
         // signal to pass to fetch
         const signal = controller.signal;
 
-        const api_setting:any = {...configOptionsDefaults, ...settings(data)};
+        const api_setting: any = {...configOptionsDefaults, ...settings(data)};
         const header = {...configOptionsDefaults.headers, ...api_setting?.headers, ...headers};
 
         Object.keys(header).forEach((key) => {
@@ -193,12 +222,16 @@ export class API_class {
 
         if (body && typeof body === 'object') body = traverse(body, value => typeof value === 'string' ? value.trim() : value);
 
-        const requestOptions = { headers: header, signal, method, ...(body && method !== 'GET' && {body: JSON.stringify(body)}) };
+        const requestOptions = {
+          headers: header,
+          signal,
+          method, ...(body && method !== 'GET' && {body: JSON.stringify(body)})
+        };
         const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
 
         if (debug) console.log("outcomingData ->", {endpoint: endPoint, payload: requestOptions, ...(body && {body})});
 
-        const handleSuccess = (resData: any, response: any, resolve: (r:any) => {}|any) => {
+        const handleSuccess = (resData: any, response: any, resolve: (r: any) => {} | any) => {
           // Svuoto l'eventuale cache sulla GET se dopo una PUT o una DELETE richiedo di pulirla
           if (cacheToClearAfter.length > 0) Cache.remove(cacheToClearAfter);
 
@@ -208,16 +241,18 @@ export class API_class {
           let rData = responseData(resData);
           if (debug) console.log("<- incomingData", rData);
 
-          if (typeof api_setting.transformResponse === 'function') {
-            rData = api_setting.transformResponse(rData);
-          }
-
           resolve(rData);
-          if (typeof onSuccess === 'function') onSuccess(rData, {data: rData, status: response.status, statusText: response.statusText, headers: response.headers, request: requestOptions/*, config: ''*/});
+          if (typeof onSuccess === 'function') onSuccess(rData, {
+            data: rData,
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+            request: requestOptions/*, config: ''*/
+          });
 
         }
 
-        const handleError = (resData: {}, response: any, reject: (r:any) => {}|any, status: number) => {
+        const handleError = (resData: {}, response: any, reject: (r: any) => {} | any, status: number) => {
           const rData = responseData(resData);
 
           if (debug && status > 0) console.log("<- incomingData", rData);
@@ -228,10 +263,16 @@ export class API_class {
             reject(rData)
           }
 
-          if (typeof onError === 'function') onError(rData, {data: rData, status: response.status, statusText: response.statusText, headers: response.headers, request: requestOptions/*, config: ''*/});
+          if (typeof onError === 'function') onError(rData, {
+            data: rData,
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+            request: requestOptions/*, config: ''*/
+          });
         }
 
-        const handleResponse = (props: {responseData:any, response: any, status: number, resolve: any, reject: any}) => {
+        const handleResponse = (props: { responseData: any, response: any, status: number, resolve: any, reject: any }) => {
           const {responseData, response, status, resolve, reject} = props;
 
           if (typeof retryIf === 'function' && retryIf(responseData, {...response, status})) {
@@ -241,8 +282,7 @@ export class API_class {
           }
 
           if (api_setting.validateStatus(status)) {
-            let r = typeof transformResponse === 'function' ? transformResponse(responseData) : responseData;
-            handleSuccess(r, response, resolve);
+            handleSuccess(responseData, response, resolve);
           } else {
             handleError(responseData, response, reject, status);
           }
@@ -283,7 +323,7 @@ export class API_class {
                     }
                   }, r
                 }
-              } )
+              })
               .then(({res, r}) => {
 
                 res.then((rJson: any) => {
@@ -307,7 +347,13 @@ export class API_class {
             const ctrl = {
               abort: () => {
                 clearTimeout(id);
-                handleResponse({responseData: {error: `The user aborted a request`}, response: {}, status: -3, resolve, reject});
+                handleResponse({
+                  responseData: {error: `The user aborted a request`},
+                  response: {},
+                  status: -3,
+                  resolve,
+                  reject
+                });
                 to = true;
                 ctrl.abort = () => {}
               }
@@ -329,7 +375,13 @@ export class API_class {
                   r = {status: mock?.success?.status || 200, response: mock?.success};
                 }
 
-                handleResponse({responseData: r, response: r, status: r.status || mockFailDefaults.status || 400, resolve, reject});
+                handleResponse({
+                  responseData: r,
+                  response: r,
+                  status: r.status || mockFailDefaults.status || 400,
+                  resolve,
+                  reject
+                });
               }
 
             }, fn.randomIntFromInterval(pingMin, pingMax));
@@ -392,7 +444,7 @@ export class API_class {
      * @returns {Promise<any>}
      */
 
-    this.call = (data: any, apiName: string, api: any, signalCallback: any):Promise<any> => {
+    this.call = (data: any, apiName: string, api: any, signalCallback: any): Promise<any> => {
 
       if (typeof api.test === 'function') {
 
@@ -402,38 +454,49 @@ export class API_class {
             reject(`${apiName}: test not passed`);
           })
         } else {
-          return this.fetchAPI({...api, signalCallback, apiName, cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime});
+          return this.fetchAPI({
+            ...api,
+            signalCallback,
+            apiName,
+            cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime
+          });
         }
 
       } else {
-        return this.fetchAPI({...api, signalCallback, apiName, cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime})
+        return this.fetchAPI({
+          ...api,
+          signalCallback,
+          apiName,
+          cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime
+        })
       }
     }
 
-    Object.keys(collection).forEach((apiname:string) => {
+    Object.keys(collection).forEach((apiname: string) => {
 
-      let controller:any = {};
+      let controller: any = {};
 
-      this.collection[apiname] = (data:any) => {
+      this.collection[apiname] = (data: any) => {
 
-        let call = this.call(data, apiname, collection[apiname](data), (ctrl:any) => {
+        let call = this.call(data, apiname, collection[apiname](data), (ctrl: any) => {
           controller = ctrl;
         });
 
         const returnObj = {
-          onSuccess: (fn:any) => {
+          onSuccess: (fn: any) => {
             call.then((r: any) => {
               fn(r);
             });
             return returnObj;
           },
-          onError: (fn:any) => {
-            call.then(() => {}, (r: any) => {
+          onError: (fn: any) => {
+            call.then(() => {
+            }, (r: any) => {
               fn(r);
             })
             return returnObj;
           },
-          always: (fn:any) => {
+          always: (fn: any) => {
             call.then((r: any) => {
               fn(r);
             }, (r: any) => {
@@ -441,8 +504,9 @@ export class API_class {
             })
             return returnObj;
           },
-          abort: () => typeof controller.abort === 'function' ? controller.abort() : () => {},
-          then: (onSuccess:any, onError:any) => {
+          abort: () => typeof controller.abort === 'function' ? controller.abort() : () => {
+          },
+          then: (onSuccess: any, onError: any) => {
             call.then(onSuccess, onError);
             return returnObj;
           }

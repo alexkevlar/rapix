@@ -75,6 +75,13 @@ class API_class {
             const startTime = new Date();
             const responseData = (response, isCache = false) => {
                 const time = new Date();
+                const ApiSettings = settings();
+                if (typeof transformResponse === 'function') {
+                    response = transformResponse(response);
+                }
+                else if (typeof ApiSettings.transformResponse === 'function') {
+                    response = ApiSettings.transformResponse(response);
+                }
                 return Object.assign(Object.assign({}, response), {
                     __reqTime: startTime.getTime(),
                     __resTime: time.getTime(),
@@ -96,7 +103,8 @@ class API_class {
                 });
                 if (body && typeof body === 'object')
                     body = (0, traverse_remap_1.traverse)(body, value => typeof value === 'string' ? value.trim() : value);
-                const requestOptions = Object.assign({ headers: header, signal, method }, (body && method !== 'GET' && { body: JSON.stringify(body) }));
+                const requestOptions = Object.assign({ headers: header, signal,
+                    method }, (body && method !== 'GET' && { body: JSON.stringify(body) }));
                 const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
                 if (debug)
                     console.log("outcomingData ->", Object.assign({ endpoint: endPoint, payload: requestOptions }, (body && { body })));
@@ -110,12 +118,15 @@ class API_class {
                     let rData = responseData(resData);
                     if (debug)
                         console.log("<- incomingData", rData);
-                    if (typeof api_setting.transformResponse === 'function') {
-                        rData = api_setting.transformResponse(rData);
-                    }
                     resolve(rData);
                     if (typeof onSuccess === 'function')
-                        onSuccess(rData, { data: rData, status: response.status, statusText: response.statusText, headers: response.headers, request: requestOptions /*, config: ''*/ });
+                        onSuccess(rData, {
+                            data: rData,
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: response.headers,
+                            request: requestOptions /*, config: ''*/
+                        });
                 };
                 const handleError = (resData, response, reject, status) => {
                     const rData = responseData(resData);
@@ -128,7 +139,13 @@ class API_class {
                         reject(rData);
                     }
                     if (typeof onError === 'function')
-                        onError(rData, { data: rData, status: response.status, statusText: response.statusText, headers: response.headers, request: requestOptions /*, config: ''*/ });
+                        onError(rData, {
+                            data: rData,
+                            status: response.status,
+                            statusText: response.statusText,
+                            headers: response.headers,
+                            request: requestOptions /*, config: ''*/
+                        });
                 };
                 const handleResponse = (props) => {
                     const { responseData, response, status, resolve, reject } = props;
@@ -139,8 +156,7 @@ class API_class {
                         this.pendingPromise.remove(apiName, method, extractData(data));
                     }
                     if (api_setting.validateStatus(status)) {
-                        let r = typeof transformResponse === 'function' ? transformResponse(responseData) : responseData;
-                        handleSuccess(r, response, resolve);
+                        handleSuccess(responseData, response, resolve);
                     }
                     else {
                         handleError(responseData, response, reject, status);
@@ -166,7 +182,8 @@ class API_class {
                                         try {
                                             res = r.json();
                                         }
-                                        catch (e) { }
+                                        catch (e) {
+                                        }
                                         if (res) {
                                             res.then((_r) => {
                                                 onrejected(_r);
@@ -192,21 +209,30 @@ class API_class {
                             console.error('Timeout');
                             handleResponse({ responseData: { error: `Timeout` }, response: {}, status: -2, resolve, reject });
                             to = true;
-                            ctrl.abort = () => { };
+                            ctrl.abort = () => {
+                            };
                         }, timeout);
                         const ctrl = {
                             abort: () => {
                                 clearTimeout(id);
-                                handleResponse({ responseData: { error: `The user aborted a request` }, response: {}, status: -3, resolve, reject });
+                                handleResponse({
+                                    responseData: { error: `The user aborted a request` },
+                                    response: {},
+                                    status: -3,
+                                    resolve,
+                                    reject
+                                });
                                 to = true;
-                                ctrl.abort = () => { };
+                                ctrl.abort = () => {
+                                };
                             }
                         };
                         signalCallback(ctrl);
                         setTimeout(() => {
                             var _a, _b;
                             clearTimeout(id);
-                            ctrl.abort = () => { };
+                            ctrl.abort = () => {
+                            };
                             if (!to) {
                                 let r;
                                 if (mock === null || mock === void 0 ? void 0 : mock.forceFail) {
@@ -216,7 +242,13 @@ class API_class {
                                 else {
                                     r = { status: ((_b = mock === null || mock === void 0 ? void 0 : mock.success) === null || _b === void 0 ? void 0 : _b.status) || 200, response: mock === null || mock === void 0 ? void 0 : mock.success };
                                 }
-                                handleResponse({ responseData: r, response: r, status: r.status || mockFailDefaults.status || 400, resolve, reject });
+                                handleResponse({
+                                    responseData: r,
+                                    response: r,
+                                    status: r.status || mockFailDefaults.status || 400,
+                                    resolve,
+                                    reject
+                                });
                             }
                         }, fn.randomIntFromInterval(pingMin, pingMax));
                     }
@@ -262,11 +294,13 @@ class API_class {
                     });
                 }
                 else {
-                    return this.fetchAPI(Object.assign(Object.assign({}, api), { signalCallback, apiName, cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime }));
+                    return this.fetchAPI(Object.assign(Object.assign({}, api), { signalCallback,
+                        apiName, cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime }));
                 }
             }
             else {
-                return this.fetchAPI(Object.assign(Object.assign({}, api), { signalCallback, apiName, cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime }));
+                return this.fetchAPI(Object.assign(Object.assign({}, api), { signalCallback,
+                    apiName, cacheTime: api.cacheTime >= 0 ? api.cacheTime : cacheTime }));
             }
         };
         Object.keys(collection).forEach((apiname) => {
@@ -283,7 +317,8 @@ class API_class {
                         return returnObj;
                     },
                     onError: (fn) => {
-                        call.then(() => { }, (r) => {
+                        call.then(() => {
+                        }, (r) => {
                             fn(r);
                         });
                         return returnObj;
@@ -296,7 +331,8 @@ class API_class {
                         });
                         return returnObj;
                     },
-                    abort: () => typeof controller.abort === 'function' ? controller.abort() : () => { },
+                    abort: () => typeof controller.abort === 'function' ? controller.abort() : () => {
+                    },
                     then: (onSuccess, onError) => {
                         call.then(onSuccess, onError);
                         return returnObj;
