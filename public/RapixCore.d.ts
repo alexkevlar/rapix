@@ -14,7 +14,7 @@ interface endpointOptions {
     };
     body?: {
         [key: string]: any;
-    };
+    } | string;
     cacheToClearAfter?: Array<string> | string;
     onSuccess?: (responseData?: object, response?: any) => void;
     retryIf?: (responseData?: object, response?: any) => boolean;

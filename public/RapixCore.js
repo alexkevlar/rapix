@@ -82,7 +82,7 @@ class API_class {
                 else if (typeof ApiSettings.transformResponse === 'function') {
                     response = ApiSettings.transformResponse(response);
                 }
-                return Object.assign(Object.assign({}, response), {
+                return Object.assign({ response }, {
                     __reqTime: startTime.getTime(),
                     __resTime: time.getTime(),
                     __ping: time.getTime() - startTime.getTime(),
@@ -104,7 +104,7 @@ class API_class {
                 if (body && typeof body === 'object')
                     body = (0, traverse_remap_1.traverse)(body, value => typeof value === 'string' ? value.trim() : value);
                 const requestOptions = Object.assign({ headers: header, signal,
-                    method }, (body && method !== 'GET' && { body: JSON.stringify(body) }));
+                    method }, (body && method !== 'GET' && { body: typeof body === 'string' ? body : JSON.stringify(body) }));
                 const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
                 if (debug)
                     console.log("outcomingData ->", Object.assign({ endpoint: endPoint, payload: requestOptions }, (body && { body })));
@@ -112,7 +112,7 @@ class API_class {
                     // Svuoto l'eventuale cache sulla GET se dopo una PUT o una DELETE richiedo di pulirla
                     if (cacheToClearAfter.length > 0)
                         Cache.remove(cacheToClearAfter);
-                    Cache.set(apiName, body, resData, method);
+                    Cache.set(url, body, resData, method);
                     if (resData === null || resData === void 0 ? void 0 : resData.status)
                         delete resData.status;
                     let rData = responseData(resData);
@@ -131,7 +131,7 @@ class API_class {
                 const handleError = (resData, response, reject, status) => {
                     const rData = responseData(resData);
                     if (debug && status > 0)
-                        console.log("<- incomingData", rData);
+                        console.error("<- incomingData", rData);
                     if (typeof retryIf === 'function' && retryIf(resData, Object.assign(Object.assign({}, response), { status }))) {
                         tryCall();
                     }
@@ -182,8 +182,7 @@ class API_class {
                                         try {
                                             res = r.json();
                                         }
-                                        catch (e) {
-                                        }
+                                        catch (e) { }
                                         if (res) {
                                             res.then((_r) => {
                                                 onrejected(_r);
@@ -209,8 +208,7 @@ class API_class {
                             console.error('Timeout');
                             handleResponse({ responseData: { error: `Timeout` }, response: {}, status: -2, resolve, reject });
                             to = true;
-                            ctrl.abort = () => {
-                            };
+                            ctrl.abort = () => { };
                         }, timeout);
                         const ctrl = {
                             abort: () => {
@@ -223,16 +221,14 @@ class API_class {
                                     reject
                                 });
                                 to = true;
-                                ctrl.abort = () => {
-                                };
+                                ctrl.abort = () => { };
                             }
                         };
                         signalCallback(ctrl);
                         setTimeout(() => {
                             var _a, _b;
                             clearTimeout(id);
-                            ctrl.abort = () => {
-                            };
+                            ctrl.abort = () => { };
                             if (!to) {
                                 let r;
                                 if (mock === null || mock === void 0 ? void 0 : mock.forceFail) {
@@ -243,7 +239,7 @@ class API_class {
                                     r = { status: ((_b = mock === null || mock === void 0 ? void 0 : mock.success) === null || _b === void 0 ? void 0 : _b.status) || 200, response: mock === null || mock === void 0 ? void 0 : mock.success };
                                 }
                                 handleResponse({
-                                    responseData: r,
+                                    responseData: r.response,
                                     response: r,
                                     status: r.status || mockFailDefaults.status || 400,
                                     resolve,
@@ -258,7 +254,7 @@ class API_class {
             const data = Object.assign(Object.assign({}, endpointOptionsDefaults), Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ url, signal: {}, method }, (headers && { headers })), (body && { body })), { mock }), (test && { test })), { apiName,
                 cacheTime,
                 cacheToClearAfter }));
-            const cache = Cache.get(apiName, body, cacheTime);
+            const cache = Cache.get(url, body, cacheTime);
             const pendingData = extractData(data);
             if (!cache) {
                 if (!this.pendingPromise.get(apiName, method, pendingData)) {

@@ -14,7 +14,7 @@ interface endpointOptions {
   url: string,
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   headers?: { [key: string]: any },
-  body?: { [key: string]: any },
+  body?: { [key: string]: any } | string,
   cacheToClearAfter?: Array<string> | string,
   onSuccess?: (responseData?: object, response?: any) => void,
   retryIf?: (responseData?: object, response?: any) => boolean,
@@ -195,7 +195,7 @@ export class API_class {
         }
 
         return {
-          ...response, ...{
+          response, ...{
             __reqTime: startTime.getTime(),
             __resTime: time.getTime(),
             __ping: time.getTime() - startTime.getTime(),
@@ -225,7 +225,7 @@ export class API_class {
         const requestOptions = {
           headers: header,
           signal,
-          method, ...(body && method !== 'GET' && {body: JSON.stringify(body)})
+          method, ...(body && method !== 'GET' && {body: typeof body === 'string' ? body : JSON.stringify(body)})
         };
         const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
 
@@ -235,7 +235,7 @@ export class API_class {
           // Svuoto l'eventuale cache sulla GET se dopo una PUT o una DELETE richiedo di pulirla
           if (cacheToClearAfter.length > 0) Cache.remove(cacheToClearAfter);
 
-          Cache.set(apiName, body, resData, method);
+          Cache.set(url, body, resData, method);
 
           if (resData?.status) delete resData.status;
           let rData = responseData(resData);
@@ -255,7 +255,7 @@ export class API_class {
         const handleError = (resData: {}, response: any, reject: (r: any) => {} | any, status: number) => {
           const rData = responseData(resData);
 
-          if (debug && status > 0) console.log("<- incomingData", rData);
+          if (debug && status > 0) console.error("<- incomingData", rData);
 
           if (typeof retryIf === 'function' && retryIf(resData, {...response, status})) {
             tryCall();
@@ -376,7 +376,7 @@ export class API_class {
                 }
 
                 handleResponse({
-                  responseData: r,
+                  responseData: r.response,
                   response: r,
                   status: r.status || mockFailDefaults.status || 400,
                   resolve,
@@ -405,7 +405,7 @@ export class API_class {
         }
       };
 
-      const cache = Cache.get(apiName, body, cacheTime);
+      const cache = Cache.get(url, body, cacheTime);
 
       const pendingData = extractData(data);
 

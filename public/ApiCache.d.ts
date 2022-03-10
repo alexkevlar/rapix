@@ -1,7 +1,7 @@
 declare class ApiCache {
-    set: (requestType?: string, sentData?: {}, response?: {}, method?: string) => void;
-    get: (requestType?: string, sentData?: {}, timeInSeconds?: number) => false | object;
-    remove: (requestType?: Array<string> | string) => void;
+    set: (requestID?: string, sentData?: {}, response?: {}, method?: string) => void;
+    get: (requestID?: string, sentData?: {}, timeInSeconds?: number) => false | object;
+    remove: (requestID?: Array<string> | string) => void;
     constructor({ defaultCacheTimeInSeconds, enabled }: {
         defaultCacheTimeInSeconds?: number | undefined;
         enabled?: boolean | undefined;

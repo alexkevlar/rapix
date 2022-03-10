@@ -9,30 +9,30 @@ class ApiCache {
         const cacheTime = defaultCacheTimeInSeconds;
         const excludedMethods = ['POST', 'PUT', 'DELETE'];
         const cacheEnabled = enabled;
-        this.set = (requestType = '', sentData = {}, response = {}, method = '') => {
+        this.set = (requestID = '', sentData = {}, response = {}, method = '') => {
             let excludeMethod = excludedMethods.length > 0 ? (excludedMethods.indexOf(method) >= 0) : false;
             let sData = JSON.stringify(sentData) || "__default";
-            if (cacheEnabled && requestType !== '' && !excludeMethod) {
+            if (cacheEnabled && requestID !== '' && !excludeMethod) {
                 if (typeof response === 'object') {
                     let r = JSON.parse(JSON.stringify(response));
                     r.__cacheExp = new Date().getTime();
-                    if (__cacheStore[requestType]) {
-                        __cacheStore[requestType][sData] = r;
+                    if (__cacheStore[requestID]) {
+                        __cacheStore[requestID][sData] = r;
                     }
                     else {
-                        __cacheStore[requestType] = {
+                        __cacheStore[requestID] = {
                             [sData]: r
                         };
                     }
                 }
             }
         };
-        this.get = (requestType = '', sentData = {}, timeInSeconds = cacheTime) => {
-            if (cacheEnabled && requestType !== '') {
+        this.get = (requestID = '', sentData = {}, timeInSeconds = cacheTime) => {
+            if (cacheEnabled && requestID !== '') {
                 let sData = JSON.stringify(sentData);
                 let responseCache = false;
                 if (sData) {
-                    const cachedResponse = __cacheStore.hasOwnProperty(requestType) ? __cacheStore[requestType].hasOwnProperty(sData) ? __cacheStore[requestType][sData] : {} : {};
+                    const cachedResponse = __cacheStore.hasOwnProperty(requestID) ? __cacheStore[requestID].hasOwnProperty(sData) ? __cacheStore[requestID][sData] : {} : {};
                     if (cachedResponse.hasOwnProperty('__cacheExp')) {
                         const now = new Date().getTime();
                         if (cachedResponse.__cacheExp >= now - timeInSeconds * 1000) {
