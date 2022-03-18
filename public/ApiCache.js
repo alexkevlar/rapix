@@ -7,7 +7,7 @@ class ApiCache {
         const __cacheStore = {};
         // Time in seconds within which a response remains in the cache
         const cacheTime = defaultCacheTimeInSeconds;
-        const excludedMethods = ['POST', 'PUT', 'DELETE'];
+        const excludedMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
         const cacheEnabled = enabled;
         this.set = (requestID = '', sentData = {}, response = {}, method = '') => {
             let excludeMethod = excludedMethods.length > 0 ? (excludedMethods.indexOf(method) >= 0) : false;
@@ -27,8 +27,9 @@ class ApiCache {
                 }
             }
         };
-        this.get = (requestID = '', sentData = {}, timeInSeconds = cacheTime) => {
-            if (cacheEnabled && requestID !== '') {
+        this.get = (requestID = '', sentData = {}, timeInSeconds = cacheTime, method = '') => {
+            let excludeMethod = excludedMethods.length > 0 ? (excludedMethods.indexOf(method) >= 0) : false;
+            if (cacheEnabled && requestID !== '' && !excludeMethod) {
                 let sData = JSON.stringify(sentData);
                 let responseCache = false;
                 if (sData) {

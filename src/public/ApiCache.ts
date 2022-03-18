@@ -1,7 +1,7 @@
 class ApiCache {
 
   public set: (requestID?: string, sentData?: {}, response?: {}, method?: string) => void;
-  public get: (requestID?: string, sentData?: {}, timeInSeconds?: number) => false | object;
+  public get: (requestID?: string, sentData?: {}, timeInSeconds?: number, method?: string) => false | object;
   public remove: (requestID?: Array<string> | string) => void;
 
   constructor({defaultCacheTimeInSeconds = 300, enabled = false}) {
@@ -13,7 +13,7 @@ class ApiCache {
     // Time in seconds within which a response remains in the cache
     const cacheTime: number = defaultCacheTimeInSeconds;
 
-    const excludedMethods: string[] = ['POST', 'PUT', 'DELETE'];
+    const excludedMethods: string[] = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
     const cacheEnabled: boolean = enabled;
 
@@ -41,9 +41,11 @@ class ApiCache {
     }
 
 
-    this.get = (requestID = '', sentData = {}, timeInSeconds = cacheTime): any => {
+    this.get = (requestID = '', sentData = {}, timeInSeconds = cacheTime, method = ''): any => {
 
-      if (cacheEnabled && requestID !== '') {
+      let excludeMethod = excludedMethods.length > 0 ? (excludedMethods.indexOf(method) >= 0) : false;
+
+      if (cacheEnabled && requestID !== '' && !excludeMethod) {
         let sData = JSON.stringify(sentData);
         let responseCache = false;
 

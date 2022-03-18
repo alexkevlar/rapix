@@ -254,7 +254,7 @@ class API_class {
             const data = Object.assign(Object.assign({}, endpointOptionsDefaults), Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ url, signal: {}, method }, (headers && { headers })), (body && { body })), { mock }), (test && { test })), { apiName,
                 cacheTime,
                 cacheToClearAfter }));
-            const cache = Cache.get(url, body, cacheTime);
+            const cache = Cache.get(url, body, cacheTime, method);
             const pendingData = extractData(data);
             if (!cache) {
                 if (!this.pendingPromise.get(apiName, method, pendingData)) {

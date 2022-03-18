@@ -405,7 +405,7 @@ export class API_class {
         }
       };
 
-      const cache = Cache.get(url, body, cacheTime);
+      const cache = Cache.get(url, body, cacheTime, method);
 
       const pendingData = extractData(data);
 
