@@ -197,8 +197,8 @@ class API_class {
                             .then(({ res, r }) => {
                             res.then((rJson) => {
                                 handleResponse({ responseData: rJson, response: r, status: r.status, resolve, reject });
-                            }, (r) => {
-                                reject(r);
+                            }, () => {
+                                handleResponse({ responseData: {}, response: {}, status: r.status, resolve, reject });
                             });
                         }, (e) => reject(e));
                     }

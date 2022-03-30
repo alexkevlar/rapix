@@ -22,7 +22,7 @@ interface endpointOptions {
   always?: (responseData?: object, response?: any) => void,
   onError?: (error?: object, response?: any) => void,
   mock?: {
-    success: { status?: number, [key: string]: any },
+    success?: { status?: number, [key: string]: any },
     fail?: failOption,
     forceFail?: boolean,
     ping?: [number, number?] | number
@@ -328,8 +328,8 @@ export class API_class {
 
                 res.then((rJson: any) => {
                   handleResponse({responseData: rJson, response: r, status: r.status, resolve, reject})
-                }, (r: any) => {
-                  reject(r);
+                }, () => {
+                  handleResponse({responseData: {}, response: {}, status: r.status, resolve, reject})
                 })
 
               }, (e) => reject(e))

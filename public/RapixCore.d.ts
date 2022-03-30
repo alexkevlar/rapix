@@ -22,7 +22,7 @@ interface endpointOptions {
     always?: (responseData?: object, response?: any) => void;
     onError?: (error?: object, response?: any) => void;
     mock?: {
-        success: {
+        success?: {
             status?: number;
             [key: string]: any;
         };
