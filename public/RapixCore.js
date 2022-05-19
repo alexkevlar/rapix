@@ -176,7 +176,7 @@ class API_class {
                             .then((r) => {
                             clearTimeout(id);
                             return {
-                                res: (r && (r === null || r === void 0 ? void 0 : r.statusText)) ? r.json() : {
+                                res: (r && (r === null || r === void 0 ? void 0 : r.status)) ? r.json() : {
                                     then(onfulfilled, onrejected) {
                                         let res;
                                         try {

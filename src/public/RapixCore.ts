@@ -305,7 +305,7 @@ export class API_class {
               .then((r: any) => {
                 clearTimeout(id);
                 return {
-                  res: (r && r?.statusText) ? r.json() : {
+                  res: (r && r?.status) ? r.json() : {
                     then(onfulfilled: any, onrejected: any) {
                       let res;
 
