@@ -6,7 +6,7 @@ interface rapixReturns {
     abort: () => {};
     then: (onSuccess?: (response?: any) => any, onError?: (error?: any) => any) => rapixReturns;
 }
-declare const rapix: (props: APIOptions) => {
-    [key: string]: (props?: any) => rapixReturns;
+declare function rapix<O extends APIOptions>(props: O): {
+    [K in keyof O["collection"]]: (props?: any) => rapixReturns;
 };
 export default rapix;

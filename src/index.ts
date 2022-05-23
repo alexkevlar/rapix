@@ -8,7 +8,7 @@ interface rapixReturns {
   then: (onSuccess?: (response?: any) => any, onError?: (error?: any) => any) => rapixReturns
 }
 
-const rapix = (props: APIOptions): { [key: string]: (props?:any) => rapixReturns } => {
+function rapix<O extends APIOptions> (props: O): { [K in keyof O["collection"]]: (props?: any ) => rapixReturns } {
   return new API_class({...APIOptionsDefaults, ...props}).collection;
 }
 

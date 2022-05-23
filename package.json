@@ -1,6 +1,6 @@
 {
   "name": "rapix",
-  "version": "0.6.13",
+  "version": "0.6.14",
   "description": "Javascript API consumer",
   "main": "index.js",
   "scripts": {
