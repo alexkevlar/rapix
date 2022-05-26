@@ -32,7 +32,7 @@ interface endpointOptions {
     };
     transformResponse?: (response: {
         [key: string]: any;
-    }) => object;
+    }) => any;
     cacheTime?: number;
     timeout?: number;
 }
