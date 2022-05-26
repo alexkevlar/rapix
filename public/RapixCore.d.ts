@@ -16,11 +16,11 @@ interface endpointOptions {
         [key: string]: any;
     } | string;
     cacheToClearAfter?: Array<string> | string;
-    onSuccess?: (responseData?: object, response?: any) => void;
-    retryIf?: (responseData?: object, response?: any) => boolean;
-    test?: (data: object) => void;
-    always?: (responseData?: object, response?: any) => void;
-    onError?: (error?: object, response?: any) => void;
+    onSuccess?: (responseData?: any, response?: any) => void;
+    retryIf?: (responseData?: any, response?: any) => boolean;
+    test?: (data: any) => boolean;
+    always?: (responseData?: any, response?: any) => void;
+    onError?: (error?: any, response?: any) => void;
     mock?: {
         success?: {
             status?: number;
@@ -30,9 +30,7 @@ interface endpointOptions {
         forceFail?: boolean;
         ping?: [number, number?] | number;
     };
-    transformResponse?: (response: {
-        [key: string]: any;
-    }) => any;
+    transformResponse?: (response: any) => any;
     cacheTime?: number;
     timeout?: number;
 }
@@ -44,7 +42,7 @@ interface configOptions {
     cache?: boolean;
     cacheTime?: number;
     validateStatus?: (status: number) => boolean;
-    transformResponse?: (r: any) => {};
+    transformResponse?: (r: any) => any;
     timeout?: number;
 }
 export interface APIOptions {
