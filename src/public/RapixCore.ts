@@ -239,7 +239,7 @@ export class API_class {
         };
         const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
   
-        if (debug) console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {endpoint: endPoint, payload: requestOptions, ...(body && {body})});
+        if (debug) console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {resource: url, endpoint: endPoint, payload: requestOptions, ...(body && {body})});
 
         const handleSuccess = (resData: any, response: any, resolve: (r: any) => {} | any) => {
           // Svuoto l'eventuale cache sulla GET se dopo una PUT o una DELETE richiedo di pulirla
@@ -249,7 +249,7 @@ export class API_class {
 
           if (resData?.status) delete resData.status;
           let rData = responseData(resData);
-          if (debug) console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {endpoint: endPoint, response: rData});
+          if (debug) console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {resource: url, endpoint: endPoint, response: rData});
 
           resolve(rData);
           if (typeof onSuccess === 'function') onSuccess(rData, {
@@ -265,7 +265,7 @@ export class API_class {
         const handleError = (resData: {}, response: any, reject: (r: any) => {} | any, status: number) => {
           const rData = responseData(resData);
 
-          if (debug && status > 0) console.error("<- incomingData", rData);
+          if (debug && status > 0) console.error(`<- error ${method}`, {resource: url, endpoint: endPoint, response: rData});
 
           if (typeof retryIf === 'function' && retryIf(resData, {...response, status})) {
             tryCall();
@@ -438,7 +438,7 @@ export class API_class {
 
         return new Promise((resolve) => {
           const response = responseData(cache, true);
-          if (debug) console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', response);
+          if (debug) console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', {resource: url, response});
           resolve(response);
         })
 
