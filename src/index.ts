@@ -1,19 +1,19 @@
 import {API_class, APIOptions, APIOptionsDefaults} from "./public/RapixCore";
 
-interface rapixReturns {
-  onSuccess: (response?: any) => rapixReturns,
-  onError: (error?: any) => rapixReturns,
-  always: (response?: any) => rapixReturns,
+export interface RapixProps {
+  onSuccess: (response?: any) => RapixProps,
+  onError: (error?: any) => RapixProps,
+  always: (response?: any) => RapixProps,
   abort: () => {},
-  then: (onSuccess?: (response?: any) => any, onError?: (error?: any) => any) => rapixReturns
+  then: (onSuccess?: (response?: any) => any, onError?: (error?: any) => any) => RapixProps
 }
 
-function rapix<O extends APIOptions> (props: O): { [K in keyof O["collection"]]: (props?: any ) => rapixReturns } {
+function rapix<O extends APIOptions> (props: O): { [K in keyof O["collection"]]: (props?: any ) => RapixProps } {
   return new API_class({...APIOptionsDefaults, ...props}).collection;
 }
 
 
-export function cascade(props: Array<(prevCallResponse?: any) => rapixReturns>, callbacks?: [(success: any, error?: any) => void]):Promise<any> {
+export function cascade(props: Array<(prevCallResponse?: any) => RapixProps>, callbacks?: [(success: any, error?: any) => void]):Promise<any> {
   
   let countCalls = 0;
   let successes = 0;

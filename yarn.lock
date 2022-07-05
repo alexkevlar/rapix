@@ -2,13 +2,6 @@
 # yarn lockfile v1
 
 
-"rapix@file:":
-  "resolved" "file:"
-  "version" "0.6.0"
-  dependencies:
-    "rapix" "file:"
-    "traverse-remap" "^1.0.6"
-
 "traverse-remap@^1.0.6":
   "integrity" "sha512-ua9w/gb2veI+S9xkpfGO90yHPa0yDJbdrLe2BiAgxr+W2j/LZavGpAb9EbG30tNE5bZPIx2/Q2bWtuh0cM/n7A=="
   "resolved" "https://registry.npmjs.org/traverse-remap/-/traverse-remap-1.0.6.tgz"

@@ -6,6 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.APIOptionsDefaults = exports.API_class = void 0;
 const ApiCache_1 = __importDefault(require("./ApiCache"));
 const traverse_remap_1 = require("traverse-remap");
+const logColors = {
+    GET: "rgb(23,157,1)",
+    POST: "rgb(181,0,206)",
+    PUT: "rgb(255, 128, 62)",
+    DELETE: "rgb(187, 1, 37)",
+    PATCH: "rgb(0, 109, 201)"
+};
 const fn = {
     randomIntFromInterval(min, max) {
         if (!max)
@@ -107,7 +114,7 @@ class API_class {
                     method }, (body && method !== 'GET' && { body: typeof body === 'string' ? body : JSON.stringify(body) }));
                 const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
                 if (debug)
-                    console.log("outcomingData ->", Object.assign({ endpoint: endPoint, payload: requestOptions }, (body && { body })));
+                    console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, Object.assign({ endpoint: endPoint, payload: requestOptions }, (body && { body })));
                 const handleSuccess = (resData, response, resolve) => {
                     // Svuoto l'eventuale cache sulla GET se dopo una PUT o una DELETE richiedo di pulirla
                     if (cacheToClearAfter.length > 0)
@@ -117,7 +124,7 @@ class API_class {
                         delete resData.status;
                     let rData = responseData(resData);
                     if (debug)
-                        console.log("<- incomingData", rData);
+                        console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, { endpoint: endPoint, response: rData });
                     resolve(rData);
                     if (typeof onSuccess === 'function')
                         onSuccess(rData, {
@@ -270,7 +277,7 @@ class API_class {
                 return new Promise((resolve) => {
                     const response = responseData(cache, true);
                     if (debug)
-                        console.log("%creceivingDataFromCache", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', response);
+                        console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', response);
                     resolve(response);
                 });
             }

@@ -1,6 +1,16 @@
 import ApiCache from "./ApiCache";
 import {traverse} from "traverse-remap";
 
+type methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+const logColors: { [method in methods]: string } = {
+  GET: "rgb(23,157,1)",
+  POST: "rgb(181,0,206)",
+  PUT: "rgb(255, 128, 62)",
+  DELETE: "rgb(187, 1, 37)",
+  PATCH: "rgb(0, 109, 201)"
+}
+
 interface failOption {
   type?: string,
   title?: string,
@@ -228,8 +238,8 @@ export class API_class {
           method, ...(body && method !== 'GET' && {body: typeof body === 'string' ? body : JSON.stringify(body)})
         };
         const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
-
-        if (debug) console.log("outcomingData ->", {endpoint: endPoint, payload: requestOptions, ...(body && {body})});
+  
+        if (debug) console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {endpoint: endPoint, payload: requestOptions, ...(body && {body})});
 
         const handleSuccess = (resData: any, response: any, resolve: (r: any) => {} | any) => {
           // Svuoto l'eventuale cache sulla GET se dopo una PUT o una DELETE richiedo di pulirla
@@ -239,7 +249,7 @@ export class API_class {
 
           if (resData?.status) delete resData.status;
           let rData = responseData(resData);
-          if (debug) console.log("<- incomingData", rData);
+          if (debug) console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {endpoint: endPoint, response: rData});
 
           resolve(rData);
           if (typeof onSuccess === 'function') onSuccess(rData, {
@@ -428,7 +438,7 @@ export class API_class {
 
         return new Promise((resolve) => {
           const response = responseData(cache, true);
-          if (debug) console.log("%creceivingDataFromCache", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', response);
+          if (debug) console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', response);
           resolve(response);
         })
 
