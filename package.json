@@ -1,6 +1,6 @@
 {
   "name": "rapix",
-  "version": "0.7.0-beta",
+  "version": "0.7.1-beta",
   "description": "Javascript API consumer",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/alexkevlar/rapix.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://registry.npmjs.org"
   },
   "keywords": [
     "api",
