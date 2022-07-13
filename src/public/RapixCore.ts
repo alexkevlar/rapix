@@ -66,10 +66,18 @@ export interface APIOptions {
 }
 
 const fn = {
-
+  
   randomIntFromInterval(min: number, max?: number) { // min and max included
     if (!max) max = min;
-    return Math.floor(Math.random() * (max - min + 1) + min)
+    const randomBuffer = new Uint32Array(1);
+    
+    window.crypto.getRandomValues(randomBuffer);
+    
+    let randomNumber = randomBuffer[0] / (0xffffffff + 1);
+    
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(randomNumber * (max - min + 1)) + min;
   }
 
 }
@@ -162,9 +170,11 @@ export class API_class {
       cacheTime = configOptionsDefaults.cacheTime,
       cache,
       debug = false,
-      timeout = configOptionsDefaults.timeout
-    } = settings();
+      timeout = configOptionsDefaults.timeout,
+      transformResponse
+    } = settings("init");
 
+    const defaultTransform = transformResponse;
     const Cache = new ApiCache({defaultCacheTimeInSeconds: cacheTime, enabled: cache === true});
 
     const extractData = (data: any) => {
@@ -196,12 +206,10 @@ export class API_class {
 
         const time = new Date();
 
-        const ApiSettings = settings();
-
         if (typeof transformResponse === 'function') {
           response = transformResponse(response);
-        } else if (typeof ApiSettings.transformResponse === 'function') {
-          response = ApiSettings.transformResponse(response);
+        } else if (typeof defaultTransform === 'function') {
+          response = defaultTransform(response);
         }
 
         return {
@@ -435,11 +443,17 @@ export class API_class {
         return this.pendingPromise.get(apiName, method, pendingData);
 
       } else {
+  
+        if (debug) console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {resource: url, ...(body && {body})});
 
         return new Promise((resolve) => {
+          
           const response = responseData(cache, true);
           if (debug) console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', {resource: url, response});
           resolve(response);
+          
+          if (typeof onSuccess === 'function') onSuccess(response, {data: response});
+          
         })
 
       }

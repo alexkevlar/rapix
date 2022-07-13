@@ -11,6 +11,7 @@ Javascript API consumer
 - Caching response data
 - Prevent multiple request
 - Mock response data
+- Cascades
 
 <br/><br/>
 
@@ -366,4 +367,26 @@ let myRequest = APIs.getUsers();
 ```
 ```javascript
 myRequest.abort();
+```
+
+<br/>
+
+### Cascades:
+
+From version 0.7.0 beta onwards cascade method was introduced.<br/>
+Now it's possible to make a sequence of API calls and pass response data from a previous call to the next one. 
+
+```javascript
+import rapix, {cascade} from "rapix";
+
+const APIs = rapix({/*...*/}); // look at the main documentation
+
+cascade([
+    () => APIs.call1(), // First call
+    (prevCall) => APIs.call2(prevCall.response) // Second call
+]).then((responses) => {
+    // on cascade success
+}, (responsesWithErrors) => {
+    // if an error occurs
+})
 ```

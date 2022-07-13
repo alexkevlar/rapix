@@ -17,7 +17,12 @@ const fn = {
     randomIntFromInterval(min, max) {
         if (!max)
             max = min;
-        return Math.floor(Math.random() * (max - min + 1) + min);
+        const randomBuffer = new Uint32Array(1);
+        window.crypto.getRandomValues(randomBuffer);
+        let randomNumber = randomBuffer[0] / (0xffffffff + 1);
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(randomNumber * (max - min + 1)) + min;
     }
 };
 const mockFailDefaults = {
@@ -72,7 +77,8 @@ class API_class {
         };
         this.collection = {};
         const { settings, collection } = props;
-        const { cacheTime = configOptionsDefaults.cacheTime, cache, debug = false, timeout = configOptionsDefaults.timeout } = settings();
+        const { cacheTime = configOptionsDefaults.cacheTime, cache, debug = false, timeout = configOptionsDefaults.timeout, transformResponse } = settings("init");
+        const defaultTransform = transformResponse;
         const Cache = new ApiCache_1.default({ defaultCacheTimeInSeconds: cacheTime, enabled: cache === true });
         const extractData = (data) => {
             const { url, method, apiName, headers, body } = data;
@@ -82,12 +88,11 @@ class API_class {
             const startTime = new Date();
             const responseData = (response, isCache = false) => {
                 const time = new Date();
-                const ApiSettings = settings();
                 if (typeof transformResponse === 'function') {
                     response = transformResponse(response);
                 }
-                else if (typeof ApiSettings.transformResponse === 'function') {
-                    response = ApiSettings.transformResponse(response);
+                else if (typeof defaultTransform === 'function') {
+                    response = defaultTransform(response);
                 }
                 return Object.assign({ response }, {
                     __reqTime: startTime.getTime(),
@@ -274,11 +279,15 @@ class API_class {
                 return this.pendingPromise.get(apiName, method, pendingData);
             }
             else {
+                if (debug)
+                    console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, Object.assign({ resource: url }, (body && { body })));
                 return new Promise((resolve) => {
                     const response = responseData(cache, true);
                     if (debug)
                         console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', { resource: url, response });
                     resolve(response);
+                    if (typeof onSuccess === 'function')
+                        onSuccess(response, { data: response });
                 });
             }
         };
