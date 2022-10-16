@@ -1,14 +1,19 @@
 import ApiCache from "./ApiCache";
 import {traverse} from "traverse-remap";
 
-type methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+export type methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'TRACE' | 'CONNECT';
 
 const logColors: { [method in methods]: string } = {
   GET: "rgb(23,157,1)",
   POST: "rgb(181,0,206)",
   PUT: "rgb(255, 128, 62)",
   DELETE: "rgb(187, 1, 37)",
-  PATCH: "rgb(0, 109, 201)"
+  PATCH: "rgb(0, 109, 201)",
+  OPTIONS: "rgb(211,188,38)",
+  HEAD: "rgb(64,100,128)",
+  TRACE: "rgb(0,201,141)",
+  CONNECT: "rgb(154,154,154)"
 }
 
 interface failOption {
@@ -20,24 +25,35 @@ interface failOption {
   [key: string]: any
 }
 
-interface endpointOptions {
+type DataType = string | boolean | number | string[] | boolean[] | number[];
+export type DataTypes = Record<string, DataType> | DataType;
+
+type ResponseFullData = {
+  data?: any,
+  headers: Record<string, any>,
+  request: Record<string, any>,
+  status: number,
+  statusText: string
+}
+
+export interface endpointOptions {
   url: string,
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+  method?: methods,
   headers?: { [key: string]: any },
-  body?: { [key: string]: any } | string,
+  body?: DataTypes,
   cacheToClearAfter?: Array<string> | string,
-  onSuccess?: (responseData?: any, response?: any) => void,
+  onSuccess?: (responseData?: any, response?: ResponseFullData) => void,
   retryIf?: (responseData?: any, response?: any) => boolean,
   test?: (data: any) => boolean,
-  always?: (responseData?: any, response?: any) => void,
-  onError?: (error?: any, response?: any) => void,
+  always?: (responseData?: any, response?: ResponseFullData) => void,
+  onError?: (error?: any, response?: ResponseFullData) => void,
   mock?: {
     success?: { status?: number, [key: string]: any },
     fail?: failOption,
     forceFail?: boolean,
     ping?: [number, number?] | number
   },
-  transformResponse?: (response: any) => any,
+  transformResponse?: (response: any) => DataTypes,
   cacheTime?: number,
   timeout?: number
 }
@@ -62,7 +78,7 @@ interface configOptions {
 
 export interface APIOptions {
   settings: (params?: any) => configOptions,
-  collection: { [key: string]: (props?: any) => endpointOptions }
+  collection: Record<string, (props?: any) => endpointOptions>
 }
 
 const fn = {
@@ -108,6 +124,10 @@ const configOptionsDefaults: configOptions = {
     return status >= 200 && status < 300;
   },
   timeout: 0
+}
+
+function canSendBody(method: methods) {
+  return method !== 'GET' && method !== 'HEAD' && method !== 'CONNECT' && method !== 'TRACE' && method !== 'OPTIONS';
 }
 
 export class API_class {
@@ -202,10 +222,12 @@ export class API_class {
 
       const startTime = new Date();
 
-      const responseData = (response: object, isCache: boolean = false) => {
+      const responseData = (response: DataTypes, isCache: boolean = false) => {
 
         const time = new Date();
-
+        let _original:DataTypes = typeof response === "object" ? {...response} : {response}.response;
+        
+        
         if (typeof transformResponse === 'function') {
           response = transformResponse(response);
         } else if (typeof defaultTransform === 'function') {
@@ -213,7 +235,7 @@ export class API_class {
         }
 
         return {
-          response, ...{
+          response, _original, ...{
             __reqTime: startTime.getTime(),
             __resTime: time.getTime(),
             __ping: time.getTime() - startTime.getTime(),
@@ -243,7 +265,7 @@ export class API_class {
         const requestOptions = {
           headers: header,
           signal,
-          method, ...(body && method !== 'GET' && {body: typeof body === 'string' ? body : JSON.stringify(body)})
+          method, ...(body && canSendBody(method) && {body: typeof body === 'string' ? body : JSON.stringify(body)})
         };
         const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
   
@@ -452,7 +474,7 @@ export class API_class {
           if (debug) console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', {resource: url, response});
           resolve(response);
           
-          if (typeof onSuccess === 'function') onSuccess(response, {data: response});
+          if (typeof onSuccess === 'function') onSuccess(response, {data: response, headers: {}, status: 200, statusText: "OK", request: data});
           
         })
 

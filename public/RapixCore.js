@@ -11,7 +11,11 @@ const logColors = {
     POST: "rgb(181,0,206)",
     PUT: "rgb(255, 128, 62)",
     DELETE: "rgb(187, 1, 37)",
-    PATCH: "rgb(0, 109, 201)"
+    PATCH: "rgb(0, 109, 201)",
+    OPTIONS: "rgb(211,188,38)",
+    HEAD: "rgb(64,100,128)",
+    TRACE: "rgb(0,201,141)",
+    CONNECT: "rgb(154,154,154)"
 };
 const fn = {
     randomIntFromInterval(min, max) {
@@ -50,6 +54,9 @@ const configOptionsDefaults = {
     },
     timeout: 0
 };
+function canSendBody(method) {
+    return method !== 'GET' && method !== 'HEAD' && method !== 'CONNECT' && method !== 'TRACE' && method !== 'OPTIONS';
+}
 class API_class {
     constructor(props) {
         this.pendingPromise = {
@@ -88,13 +95,14 @@ class API_class {
             const startTime = new Date();
             const responseData = (response, isCache = false) => {
                 const time = new Date();
+                let _original = typeof response === "object" ? Object.assign({}, response) : { response }.response;
                 if (typeof transformResponse === 'function') {
                     response = transformResponse(response);
                 }
                 else if (typeof defaultTransform === 'function') {
                     response = defaultTransform(response);
                 }
-                return Object.assign({ response }, {
+                return Object.assign({ response, _original }, {
                     __reqTime: startTime.getTime(),
                     __resTime: time.getTime(),
                     __ping: time.getTime() - startTime.getTime(),
@@ -116,7 +124,7 @@ class API_class {
                 if (body && typeof body === 'object')
                     body = (0, traverse_remap_1.traverse)(body, value => typeof value === 'string' ? value.trim() : value);
                 const requestOptions = Object.assign({ headers: header, signal,
-                    method }, (body && method !== 'GET' && { body: typeof body === 'string' ? body : JSON.stringify(body) }));
+                    method }, (body && canSendBody(method) && { body: typeof body === 'string' ? body : JSON.stringify(body) }));
                 const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
                 if (debug)
                     console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, Object.assign({ resource: url, endpoint: endPoint, payload: requestOptions }, (body && { body })));
@@ -287,7 +295,7 @@ class API_class {
                         console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', { resource: url, response });
                     resolve(response);
                     if (typeof onSuccess === 'function')
-                        onSuccess(response, { data: response });
+                        onSuccess(response, { data: response, headers: {}, status: 200, statusText: "OK", request: data });
                 });
             }
         };

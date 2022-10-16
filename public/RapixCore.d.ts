@@ -1,3 +1,4 @@
+export declare type methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'TRACE' | 'CONNECT';
 interface failOption {
     type?: string;
     title?: string;
@@ -6,21 +7,28 @@ interface failOption {
     instance?: string;
     [key: string]: any;
 }
-interface endpointOptions {
+declare type DataType = string | boolean | number | string[] | boolean[] | number[];
+export declare type DataTypes = Record<string, DataType> | DataType;
+declare type ResponseFullData = {
+    data?: any;
+    headers: Record<string, any>;
+    request: Record<string, any>;
+    status: number;
+    statusText: string;
+};
+export interface endpointOptions {
     url: string;
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    method?: methods;
     headers?: {
         [key: string]: any;
     };
-    body?: {
-        [key: string]: any;
-    } | string;
+    body?: DataTypes;
     cacheToClearAfter?: Array<string> | string;
-    onSuccess?: (responseData?: any, response?: any) => void;
+    onSuccess?: (responseData?: any, response?: ResponseFullData) => void;
     retryIf?: (responseData?: any, response?: any) => boolean;
     test?: (data: any) => boolean;
-    always?: (responseData?: any, response?: any) => void;
-    onError?: (error?: any, response?: any) => void;
+    always?: (responseData?: any, response?: ResponseFullData) => void;
+    onError?: (error?: any, response?: ResponseFullData) => void;
     mock?: {
         success?: {
             status?: number;
@@ -30,7 +38,7 @@ interface endpointOptions {
         forceFail?: boolean;
         ping?: [number, number?] | number;
     };
-    transformResponse?: (response: any) => any;
+    transformResponse?: (response: any) => DataTypes;
     cacheTime?: number;
     timeout?: number;
 }
@@ -47,9 +55,7 @@ interface configOptions {
 }
 export interface APIOptions {
     settings: (params?: any) => configOptions;
-    collection: {
-        [key: string]: (props?: any) => endpointOptions;
-    };
+    collection: Record<string, (props?: any) => endpointOptions>;
 }
 export declare class API_class {
     readonly collection: any;

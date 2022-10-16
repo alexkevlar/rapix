@@ -1,7 +1,9 @@
+import { DataTypes, methods } from "./RapixCore";
+
 class ApiCache {
 
-  public set: (requestID?: string, sentData?: {}, response?: {}, method?: string) => void;
-  public get: (requestID?: string, sentData?: {}, timeInSeconds?: number, method?: string) => false | object;
+  public set: (requestID?: string, sentData?: {}, response?: {}, method?: methods) => void;
+  public get: (requestID?: string, sentData?: {}, timeInSeconds?: number, method?: methods) => DataTypes;
   public remove: (requestID?: Array<string> | string) => void;
 
   constructor({defaultCacheTimeInSeconds = 300, enabled = false}) {
@@ -13,13 +15,13 @@ class ApiCache {
     // Time in seconds within which a response remains in the cache
     const cacheTime: number = defaultCacheTimeInSeconds;
 
-    const excludedMethods: string[] = ['POST', 'PUT', 'DELETE', 'PATCH'];
+    const excludedMethods: methods[] = ['POST', 'PUT', 'DELETE', 'PATCH', 'CONNECT', 'OPTIONS', 'TRACE'];
 
     const cacheEnabled: boolean = enabled;
 
 
-    this.set = (requestID = '', sentData = {}, response = {}, method = '') => {
-
+    this.set = (requestID = '', sentData = {}, response = {}, method = 'GET') => {
+  
       let excludeMethod = excludedMethods.length > 0 ? (excludedMethods.indexOf(method) >= 0) : false;
       let sData = JSON.stringify(sentData) || "__default";
 
@@ -41,7 +43,7 @@ class ApiCache {
     }
 
 
-    this.get = (requestID = '', sentData = {}, timeInSeconds = cacheTime, method = ''): any => {
+    this.get = (requestID = '', sentData = {}, timeInSeconds = cacheTime, method = 'GET'): any => {
 
       let excludeMethod = excludedMethods.length > 0 ? (excludedMethods.indexOf(method) >= 0) : false;
 
