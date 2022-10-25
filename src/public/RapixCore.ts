@@ -25,8 +25,7 @@ interface failOption {
   [key: string]: any
 }
 
-type DataType = string | boolean | number | string[] | boolean[] | number[];
-export type DataTypes = Record<string, DataType> | DataType;
+export type DataTypes = Record<string, any> | any;
 
 type ResponseFullData = {
   data?: any,

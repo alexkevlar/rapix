@@ -7,8 +7,7 @@ interface failOption {
     instance?: string;
     [key: string]: any;
 }
-declare type DataType = string | boolean | number | string[] | boolean[] | number[];
-export declare type DataTypes = Record<string, DataType> | DataType;
+export declare type DataTypes = Record<string, any> | any;
 declare type ResponseFullData = {
     data?: any;
     headers: Record<string, any>;
