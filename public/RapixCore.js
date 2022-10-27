@@ -21,7 +21,7 @@ const fn = {
     randomIntFromInterval(min, max) {
         if (!max)
             max = min;
-        if (crypto && "getRandomValues" in crypto) {
+        if (window === null || window === void 0 ? void 0 : window.crypto) {
             const randomBuffer = new Uint32Array(1);
             crypto.getRandomValues(randomBuffer);
             let randomNumber = randomBuffer[0] / (0xffffffff + 1);

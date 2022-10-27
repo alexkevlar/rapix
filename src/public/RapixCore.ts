@@ -86,7 +86,7 @@ const fn = {
 
     if (!max) max = min;
 
-    if (crypto && "getRandomValues" in crypto) {
+    if (window?.crypto) {
       const randomBuffer = new Uint32Array(1);
 
       crypto.getRandomValues(randomBuffer);
