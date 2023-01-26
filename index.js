@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cascade = void 0;
 const RapixCore_1 = require("./public/RapixCore");
 function rapix(props) {
-    return new RapixCore_1.API_class(Object.assign(Object.assign({}, RapixCore_1.APIOptionsDefaults), props)).collection;
+    return new RapixCore_1.ApiClass(Object.assign(Object.assign({}, RapixCore_1.APIOptionsDefaults), props)).collection;
 }
 function cascade(props, callbacks) {
     let countCalls = 0;

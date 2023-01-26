@@ -16,7 +16,7 @@ const logColors: { [method in methods]: string } = {
   CONNECT: "rgb(154,154,154)"
 }
 
-interface failOption {
+interface FailOption {
   type?: string,
   title?: string,
   status?: number,
@@ -35,7 +35,7 @@ type ResponseFullData = {
   statusText: string
 }
 
-export interface endpointOptions {
+export interface EndpointOptions {
   url: string,
   method?: methods,
   headers?: { [key: string]: any },
@@ -48,7 +48,7 @@ export interface endpointOptions {
   onError?: (error?: any, response?: ResponseFullData) => void,
   mock?: {
     success?: { status?: number, [key: string]: any },
-    fail?: failOption,
+    fail?: FailOption,
     forceFail?: boolean,
     ping?: [number, number?] | number
   },
@@ -57,13 +57,13 @@ export interface endpointOptions {
   timeout?: number
 }
 
-interface fetchAPIOptions extends endpointOptions {
+interface FetchAPIOptions extends EndpointOptions {
   apiName: string,
   cacheTime: number,
   signalCallback?: any
 }
 
-interface configOptions {
+interface ConfigOptions {
   baseURL: string;
   fetchRemote?: boolean,
   headers?: object,
@@ -76,8 +76,8 @@ interface configOptions {
 }
 
 export interface APIOptions {
-  settings: (params?: any) => configOptions,
-  collection: Record<string, (props?: any) => endpointOptions>
+  settings: (params?: any) => ConfigOptions,
+  collection: Record<string, (props?: any) => EndpointOptions>
 }
 
 const fn = {
@@ -104,7 +104,7 @@ const fn = {
 
 }
 
-const mockFailDefaults: failOption = {
+const mockFailDefaults: FailOption = {
   type: "BadRequest",
   title: "",
   status: 400,
@@ -112,12 +112,12 @@ const mockFailDefaults: failOption = {
   instance: ""
 }
 
-const endpointOptionsDefaults: endpointOptions = {
+const endpointOptionsDefaults: EndpointOptions = {
   url: "/",
   method: 'GET'
 }
 
-const configOptionsDefaults: configOptions = {
+const configOptionsDefaults: ConfigOptions = {
   baseURL: "http://127.0.0.1",
   headers: {
     'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ function canSendBody(method: methods) {
   return method !== 'GET' && method !== 'HEAD' && method !== 'CONNECT' && method !== 'TRACE' && method !== 'OPTIONS';
 }
 
-export class API_class {
+export class ApiClass {
 
   readonly collection: any;
 
@@ -153,7 +153,7 @@ export class API_class {
                                 cacheTime,
                                 cacheToClearAfter,
                                 retryIf
-                              }: fetchAPIOptions) => (any);
+                              }: FetchAPIOptions) => (any);
 
 
   private readonly pendingPromise: { store: { [key: string]: any }, remove: (endpoint: string, method: string, sentData: object | string | undefined) => {}, get: (endpoint: string, method: string, sentData: object | string | undefined) => {}, set: (endpoint: string, method: string, sentData: object | string | undefined, promise: any) => {} } = {
@@ -252,7 +252,7 @@ export class API_class {
       }
 
 
-      const promise = (data: fetchAPIOptions) => new Promise((resolve, reject) => {
+      const promise = (data: FetchAPIOptions) => new Promise((resolve, reject) => {
 
         // setup AbortController
         const controller = new AbortController();
@@ -349,16 +349,18 @@ export class API_class {
               handleResponse({responseData: {error: e}, response: e, status: -1, resolve, reject})
             })
               .then((r: any) => {
+
                 clearTimeout(id);
+
+                function parseResponse(response: any) {
+                  const _r = response.clone();
+                  return requestOptions.headers["Content-Type"] === "application/json" && api_setting.validateStatus(_r.status) ? _r.json() : _r.text();
+                }
+
                 return {
-                  res: (r && r?.status) ? r.json() : {
+                  res: (r && r?.status) ? parseResponse(r) : {
                     then(onfulfilled: any, onrejected: any) {
-                      let res;
-
-                      try {
-                        res = r.json();
-                      } catch (e) {}
-
+                      const res = parseResponse(r);
                       if (res) {
                         res.then((_r: any) => {
                           onrejected(_r);
@@ -369,13 +371,14 @@ export class API_class {
                     }
                   }, r
                 }
+
               })
               .then(({res, r}) => {
 
-                res.then((rJson: any) => {
-                  handleResponse({responseData: rJson, response: r, status: r.status, resolve, reject})
-                }, () => {
-                  handleResponse({responseData: {}, response: {}, status: r.status, resolve, reject})
+                res.then((content: any) => {
+                  handleResponse({ responseData: content, response: r, status: r.status, resolve, reject })
+                }, (content: any) => {
+                  handleResponse({ responseData: content, response: {}, status: r.status, resolve, reject })
                 })
 
               }, (e) => reject(e))
@@ -502,9 +505,7 @@ export class API_class {
 
         if (!api.test(data)) {
           console.error(`${apiName}: test not passed`);
-          return new Promise((resolve, reject) => {
-            reject(`${apiName}: test not passed`);
-          })
+          return Promise.reject(`${apiName}: test not passed`)
         } else {
           return this.fetchAPI({
             ...api,

@@ -1,5 +1,5 @@
 export declare type methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'TRACE' | 'CONNECT';
-interface failOption {
+interface FailOption {
     type?: string;
     title?: string;
     status?: number;
@@ -15,7 +15,7 @@ declare type ResponseFullData = {
     status: number;
     statusText: string;
 };
-export interface endpointOptions {
+export interface EndpointOptions {
     url: string;
     method?: methods;
     headers?: {
@@ -33,7 +33,7 @@ export interface endpointOptions {
             status?: number;
             [key: string]: any;
         };
-        fail?: failOption;
+        fail?: FailOption;
         forceFail?: boolean;
         ping?: [number, number?] | number;
     };
@@ -41,7 +41,7 @@ export interface endpointOptions {
     cacheTime?: number;
     timeout?: number;
 }
-interface configOptions {
+interface ConfigOptions {
     baseURL: string;
     fetchRemote?: boolean;
     headers?: object;
@@ -53,10 +53,10 @@ interface configOptions {
     timeout?: number;
 }
 export interface APIOptions {
-    settings: (params?: any) => configOptions;
-    collection: Record<string, (props?: any) => endpointOptions>;
+    settings: (params?: any) => ConfigOptions;
+    collection: Record<string, (props?: any) => EndpointOptions>;
 }
-export declare class API_class {
+export declare class ApiClass {
     readonly collection: any;
     private readonly call;
     private readonly fetchAPI;

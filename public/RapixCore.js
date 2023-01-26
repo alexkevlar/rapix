@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.APIOptionsDefaults = exports.API_class = void 0;
+exports.APIOptionsDefaults = exports.ApiClass = void 0;
 const ApiCache_1 = __importDefault(require("./ApiCache"));
 const traverse_remap_1 = require("traverse-remap");
 const logColors = {
@@ -62,7 +62,7 @@ const configOptionsDefaults = {
 function canSendBody(method) {
     return method !== 'GET' && method !== 'HEAD' && method !== 'CONNECT' && method !== 'TRACE' && method !== 'OPTIONS';
 }
-class API_class {
+class ApiClass {
     constructor(props) {
         this.pendingPromise = {
             store: {
@@ -200,14 +200,14 @@ class API_class {
                         })
                             .then((r) => {
                             clearTimeout(id);
+                            function parseResponse(response) {
+                                const _r = response.clone();
+                                return requestOptions.headers["Content-Type"] === "application/json" && api_setting.validateStatus(_r.status) ? _r.json() : _r.text();
+                            }
                             return {
-                                res: (r && (r === null || r === void 0 ? void 0 : r.status)) ? r.json() : {
+                                res: (r && (r === null || r === void 0 ? void 0 : r.status)) ? parseResponse(r) : {
                                     then(onfulfilled, onrejected) {
-                                        let res;
-                                        try {
-                                            res = r.json();
-                                        }
-                                        catch (e) { }
+                                        const res = parseResponse(r);
                                         if (res) {
                                             res.then((_r) => {
                                                 onrejected(_r);
@@ -220,10 +220,10 @@ class API_class {
                             };
                         })
                             .then(({ res, r }) => {
-                            res.then((rJson) => {
-                                handleResponse({ responseData: rJson, response: r, status: r.status, resolve, reject });
-                            }, () => {
-                                handleResponse({ responseData: {}, response: {}, status: r.status, resolve, reject });
+                            res.then((content) => {
+                                handleResponse({ responseData: content, response: r, status: r.status, resolve, reject });
+                            }, (content) => {
+                                handleResponse({ responseData: content, response: {}, status: r.status, resolve, reject });
                             });
                         }, (e) => reject(e));
                     }
@@ -314,9 +314,7 @@ class API_class {
             if (typeof api.test === 'function') {
                 if (!api.test(data)) {
                     console.error(`${apiName}: test not passed`);
-                    return new Promise((resolve, reject) => {
-                        reject(`${apiName}: test not passed`);
-                    });
+                    return Promise.reject(`${apiName}: test not passed`);
                 }
                 else {
                     return this.fetchAPI(Object.assign(Object.assign({}, api), { signalCallback,
@@ -368,7 +366,7 @@ class API_class {
         });
     }
 }
-exports.API_class = API_class;
+exports.ApiClass = ApiClass;
 exports.APIOptionsDefaults = {
     settings: () => configOptionsDefaults,
     collection: {}

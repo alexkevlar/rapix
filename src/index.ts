@@ -1,4 +1,5 @@
-import {API_class, APIOptions, APIOptionsDefaults} from "./public/RapixCore";
+import {ApiClass, APIOptions, APIOptionsDefaults} from "./public/RapixCore";
+
 
 export interface RapixProps {
   onSuccess: (response?: any) => RapixProps,
@@ -9,9 +10,8 @@ export interface RapixProps {
 }
 
 function rapix<O extends APIOptions> (props: O): { [K in keyof O["collection"]]: (props?: any ) => RapixProps } {
-  return new API_class({...APIOptionsDefaults, ...props}).collection;
+  return new ApiClass({...APIOptionsDefaults, ...props}).collection;
 }
-
 
 export function cascade(props: Array<(prevCallResponse?: any) => RapixProps>, callbacks?: [(success: any, error?: any) => void]):Promise<any> {
   
