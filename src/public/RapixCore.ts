@@ -54,7 +54,8 @@ export interface EndpointOptions {
   },
   transformResponse?: (response: any) => DataTypes,
   cacheTime?: number,
-  timeout?: number
+  timeout?: number,
+  fetchRemote?: boolean
 }
 
 interface FetchAPIOptions extends EndpointOptions {
@@ -118,7 +119,7 @@ const endpointOptionsDefaults: EndpointOptions = {
 }
 
 const configOptionsDefaults: ConfigOptions = {
-  baseURL: "http://127.0.0.1",
+  baseURL: "",
   headers: {
     'Content-Type': 'application/json',
   },
@@ -142,18 +143,21 @@ export class ApiClass {
 
   private readonly call: any;
 
-  private readonly fetchAPI: ({
-                                url,
-                                method,
-                                headers,
-                                body,
-                                mock,
-                                test,
-                                apiName,
-                                cacheTime,
-                                cacheToClearAfter,
-                                retryIf
-                              }: FetchAPIOptions) => (any);
+  private readonly fetchAPI: (
+    {
+      url,
+      method,
+      headers,
+      body,
+      mock,
+      test,
+      apiName,
+      cacheTime,
+      cacheToClearAfter,
+      fetchRemote,
+      retryIf
+    }: FetchAPIOptions
+  ) => (any);
 
 
   private readonly pendingPromise: { store: { [key: string]: any }, remove: (endpoint: string, method: string, sentData: object | string | undefined) => {}, get: (endpoint: string, method: string, sentData: object | string | undefined) => {}, set: (endpoint: string, method: string, sentData: object | string | undefined, promise: any) => {} } = {
@@ -208,23 +212,26 @@ export class ApiClass {
       return {url, method, apiName, headers, body};
     }
 
-    this.fetchAPI = ({
-                       url,
-                       signalCallback,
-                       method = 'GET',
-                       headers,
-                       body,
-                       mock,
-                       test,
-                       apiName,
-                       cacheTime,
-                       cacheToClearAfter = [],
-                       onError,
-                       onSuccess,
-                       always,
-                       transformResponse,
-                       retryIf
-                     }) => {
+    this.fetchAPI = (
+      {
+        url,
+        signalCallback,
+        method = 'GET',
+        headers,
+        body,
+        mock,
+        test,
+        apiName,
+        cacheTime,
+        cacheToClearAfter = [],
+        onError,
+        onSuccess,
+        always,
+        transformResponse,
+        fetchRemote,
+        retryIf
+      }
+    ) => {
 
       const startTime = new Date();
 
@@ -256,6 +263,7 @@ export class ApiClass {
 
         // setup AbortController
         const controller = new AbortController();
+
         // signal to pass to fetch
         const signal = controller.signal;
 
@@ -273,6 +281,7 @@ export class ApiClass {
           signal,
           method, ...(body && canSendBody(method) && {body: typeof body === 'string' ? body : JSON.stringify(body)})
         };
+
         const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
   
         if (debug) console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {resource: url, endpoint: endPoint, payload: requestOptions, ...(body && {body})});
@@ -340,7 +349,7 @@ export class ApiClass {
         const pingMax = typeof mock?.ping === 'number' ? mock.ping : mock?.ping?.[1] || 500;
 
         const tryCall = () => {
-          if (api_setting?.fetchRemote === true) {
+          if (api_setting?.fetchRemote === true && fetchRemote !== false || fetchRemote === true) {
 
             signalCallback(controller);
             const id = timeout && setTimeout(() => controller.abort(), timeout);

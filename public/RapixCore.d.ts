@@ -40,6 +40,7 @@ export interface EndpointOptions {
     transformResponse?: (response: any) => DataTypes;
     cacheTime?: number;
     timeout?: number;
+    fetchRemote?: boolean;
 }
 interface ConfigOptions {
     baseURL: string;

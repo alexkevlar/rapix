@@ -46,7 +46,7 @@ const endpointOptionsDefaults = {
     method: 'GET'
 };
 const configOptionsDefaults = {
-    baseURL: "http://127.0.0.1",
+    baseURL: "",
     headers: {
         'Content-Type': 'application/json',
     },
@@ -96,7 +96,7 @@ class ApiClass {
             const { url, method, apiName, headers, body } = data;
             return { url, method, apiName, headers, body };
         };
-        this.fetchAPI = ({ url, signalCallback, method = 'GET', headers, body, mock, test, apiName, cacheTime, cacheToClearAfter = [], onError, onSuccess, always, transformResponse, retryIf }) => {
+        this.fetchAPI = ({ url, signalCallback, method = 'GET', headers, body, mock, test, apiName, cacheTime, cacheToClearAfter = [], onError, onSuccess, always, transformResponse, fetchRemote, retryIf }) => {
             const startTime = new Date();
             const responseData = (response, isCache = false) => {
                 const time = new Date();
@@ -192,7 +192,7 @@ class ApiClass {
                 const pingMin = typeof (mock === null || mock === void 0 ? void 0 : mock.ping) === 'number' ? mock.ping : ((_a = mock === null || mock === void 0 ? void 0 : mock.ping) === null || _a === void 0 ? void 0 : _a[0]) || 350;
                 const pingMax = typeof (mock === null || mock === void 0 ? void 0 : mock.ping) === 'number' ? mock.ping : ((_b = mock === null || mock === void 0 ? void 0 : mock.ping) === null || _b === void 0 ? void 0 : _b[1]) || 500;
                 const tryCall = () => {
-                    if ((api_setting === null || api_setting === void 0 ? void 0 : api_setting.fetchRemote) === true) {
+                    if ((api_setting === null || api_setting === void 0 ? void 0 : api_setting.fetchRemote) === true && fetchRemote !== false || fetchRemote === true) {
                         signalCallback(controller);
                         const id = timeout && setTimeout(() => controller.abort(), timeout);
                         fetch(endPoint, requestOptions).catch((e) => {
