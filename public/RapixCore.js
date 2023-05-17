@@ -106,7 +106,7 @@ class ApiClass {
                     response = defaultTransform(Object.assign({}, original));
                 }
                 if (typeof transformResponse === 'function') {
-                    response = transformResponse(Object.assign({}, original), Object.assign({}, response));
+                    response = transformResponse(Object.assign({}, response), Object.assign({}, original));
                 }
                 return { _response: response, _original: original };
             };

@@ -254,7 +254,7 @@ export class ApiClass {
         }
 
         if (typeof transformResponse === 'function') {
-          response = transformResponse({ ...original }, { ...response });
+          response = transformResponse({ ...response }, { ...original });
         }
 
         return { _response: response, _original: original }
