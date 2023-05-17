@@ -245,19 +245,19 @@ export class ApiClass {
 
       const transformData = (response: DataTypes) => {
 
-        let original: DataTypes = typeof response === "object" ? { ...response } : { response }.response;
-
-        if (response?.status) delete response.status;
+        let _response: DataTypes = JSON.parse(JSON.stringify(response));
 
         if (typeof defaultTransform === 'function') {
-          response = defaultTransform({ ...original });
+          _response = defaultTransform(_response);
         }
 
         if (typeof transformResponse === 'function') {
-          response = transformResponse({ ...response }, { ...original });
+          _response = transformResponse(_response, JSON.parse(JSON.stringify(response)));
         }
 
-        return { _response: response, _original: original }
+        if (_response?.status) delete _response.status;
+
+        return { _response, _original: JSON.parse(JSON.stringify(response)) }
 
       }
 

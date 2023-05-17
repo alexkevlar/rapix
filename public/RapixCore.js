@@ -99,16 +99,16 @@ class ApiClass {
         this.fetchAPI = ({ url, signalCallback, method = 'GET', headers, body, mock, test, apiName, cacheTime, cacheToClearAfter = [], onError, onSuccess, always, transformResponse, fetchRemote, retryIf }) => {
             const startTime = new Date();
             const transformData = (response) => {
-                let original = typeof response === "object" ? Object.assign({}, response) : { response }.response;
-                if (response === null || response === void 0 ? void 0 : response.status)
-                    delete response.status;
+                let _response = JSON.parse(JSON.stringify(response));
                 if (typeof defaultTransform === 'function') {
-                    response = defaultTransform(Object.assign({}, original));
+                    _response = defaultTransform(_response);
                 }
                 if (typeof transformResponse === 'function') {
-                    response = transformResponse(Object.assign({}, response), Object.assign({}, original));
+                    _response = transformResponse(_response, JSON.parse(JSON.stringify(response)));
                 }
-                return { _response: response, _original: original };
+                if (_response === null || _response === void 0 ? void 0 : _response.status)
+                    delete _response.status;
+                return { _response, _original: JSON.parse(JSON.stringify(response)) };
             };
             const responseData = (response, isCache = false, _original) => {
                 const time = new Date();
