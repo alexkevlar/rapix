@@ -37,7 +37,7 @@ export interface EndpointOptions {
         forceFail?: boolean;
         ping?: [number, number?] | number;
     };
-    transformResponse?: (response: any) => DataTypes;
+    transformResponse?: (original: any, response: any) => any;
     cacheTime?: number;
     timeout?: number;
     fetchRemote?: boolean;

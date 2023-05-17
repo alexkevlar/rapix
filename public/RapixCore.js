@@ -98,15 +98,20 @@ class ApiClass {
         };
         this.fetchAPI = ({ url, signalCallback, method = 'GET', headers, body, mock, test, apiName, cacheTime, cacheToClearAfter = [], onError, onSuccess, always, transformResponse, fetchRemote, retryIf }) => {
             const startTime = new Date();
-            const responseData = (response, isCache = false) => {
-                const time = new Date();
-                let _original = typeof response === "object" ? Object.assign({}, response) : { response }.response;
+            const transformData = (response) => {
+                let original = typeof response === "object" ? Object.assign({}, response) : { response }.response;
+                if (response === null || response === void 0 ? void 0 : response.status)
+                    delete response.status;
+                if (typeof defaultTransform === 'function') {
+                    response = defaultTransform(Object.assign({}, response));
+                }
                 if (typeof transformResponse === 'function') {
-                    response = transformResponse(response);
+                    response = transformResponse(Object.assign({}, original), Object.assign({}, response));
                 }
-                else if (typeof defaultTransform === 'function') {
-                    response = defaultTransform(response);
-                }
+                return { _response: response, _original: original };
+            };
+            const responseData = (response, isCache = false, _original) => {
+                const time = new Date();
                 return Object.assign({ response, _original }, {
                     __reqTime: startTime.getTime(),
                     __resTime: time.getTime(),
@@ -138,39 +143,48 @@ class ApiClass {
                     if (cacheToClearAfter.length > 0)
                         Cache.remove(cacheToClearAfter);
                     Cache.set(url, body, resData, method);
-                    if (resData === null || resData === void 0 ? void 0 : resData.status)
-                        delete resData.status;
-                    let rData = responseData(resData);
+                    const { _response, _original } = transformData(resData);
+                    let rData = responseData(_response, false, _original);
                     if (debug)
-                        console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, { resource: url, endpoint: endPoint, response: rData });
-                    resolve(rData);
-                    if (typeof onSuccess === 'function')
-                        onSuccess(rData, {
-                            data: rData,
-                            status: response.status,
-                            statusText: response.statusText,
-                            headers: response.headers,
-                            request: requestOptions /*, config: ''*/
+                        console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {
+                            resource: url,
+                            endpoint: endPoint,
+                            response: rData
                         });
+                    const fullResponse = {
+                        data: rData,
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: response.headers,
+                        request: requestOptions /*, config: ''*/
+                    };
+                    resolve(fullResponse);
+                    if (typeof onSuccess === 'function')
+                        onSuccess(rData, fullResponse);
                 };
                 const handleError = (resData, response, reject, status) => {
-                    const rData = responseData(resData);
+                    const rData = responseData(resData, false, resData);
+                    const fullResponse = {
+                        data: rData,
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: response.headers,
+                        request: requestOptions /*, config: ''*/
+                    };
                     if (debug && status > 0)
-                        console.error(`<- error ${method}`, { resource: url, endpoint: endPoint, response: rData });
+                        console.error(`<- error ${method}`, {
+                            resource: url,
+                            endpoint: endPoint,
+                            response: rData
+                        });
                     if (typeof retryIf === 'function' && retryIf(resData, Object.assign(Object.assign({}, response), { status }))) {
                         tryCall();
                     }
                     else {
-                        reject(rData);
+                        reject(fullResponse);
                     }
                     if (typeof onError === 'function')
-                        onError(rData, {
-                            data: rData,
-                            status: response.status,
-                            statusText: response.statusText,
-                            headers: response.headers,
-                            request: requestOptions /*, config: ''*/
-                        });
+                        onError(rData, fullResponse);
                 };
                 const handleResponse = (props) => {
                     const { responseData, response, status, resolve, reject } = props;
@@ -225,7 +239,7 @@ class ApiClass {
                             }, (content) => {
                                 handleResponse({ responseData: content, response: {}, status: r.status, resolve, reject });
                             });
-                        }, (e) => reject(e));
+                        }, (e) => reject({ data: e.data, status: e.status }));
                     }
                     else {
                         let to = false;
@@ -233,7 +247,7 @@ class ApiClass {
                             console.error('Timeout');
                             handleResponse({ responseData: { error: `Timeout` }, response: {}, status: -2, resolve, reject });
                             to = true;
-                            ctrl.abort = () => { };
+                            ctrl.abort = () => void 0;
                         }, timeout);
                         const ctrl = {
                             abort: () => {
@@ -246,19 +260,23 @@ class ApiClass {
                                     reject
                                 });
                                 to = true;
-                                ctrl.abort = () => { };
+                                ctrl.abort = () => {
+                                };
                             }
                         };
                         signalCallback(ctrl);
                         setTimeout(() => {
                             var _a, _b;
                             clearTimeout(id);
-                            ctrl.abort = () => { };
+                            ctrl.abort = () => void 0;
                             if (!to) {
                                 let r;
                                 if (mock === null || mock === void 0 ? void 0 : mock.forceFail) {
                                     mock.fail = Object.assign(Object.assign({}, mockFailDefaults), mock.fail);
-                                    r = { status: mock.fail.status, response: Object.assign(Object.assign({}, mock.fail), { instance: ((_a = mock.fail) === null || _a === void 0 ? void 0 : _a.instance) || url }) };
+                                    r = {
+                                        status: mock.fail.status,
+                                        response: Object.assign(Object.assign({}, mock.fail), { instance: ((_a = mock.fail) === null || _a === void 0 ? void 0 : _a.instance) || url })
+                                    };
                                 }
                                 else {
                                     r = { status: ((_b = mock === null || mock === void 0 ? void 0 : mock.success) === null || _b === void 0 ? void 0 : _b.status) || 200, response: mock === null || mock === void 0 ? void 0 : mock.success };
@@ -295,12 +313,27 @@ class ApiClass {
                 if (debug)
                     console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, Object.assign({ resource: url }, (body && { body })));
                 return new Promise((resolve) => {
-                    const response = responseData(cache, true);
+                    const { _response, _original } = transformData(cache);
+                    delete _original.__cacheExp;
+                    const response = responseData(_response, true, _original);
+                    const api_setting = Object.assign(Object.assign({}, configOptionsDefaults), settings(data));
+                    const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
                     if (debug)
-                        console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', { resource: url, response });
-                    resolve(response);
+                        console.log("%c<- cached", 'font-weight: bold; font-size: 12px;color: rgb(66, 165, 244)', {
+                            resource: url,
+                            endpoint: endPoint,
+                            response
+                        });
+                    const fullResponse = {
+                        data: response,
+                        headers: {},
+                        status: 200,
+                        statusText: "OK",
+                        request: data
+                    };
+                    resolve(fullResponse);
                     if (typeof onSuccess === 'function')
-                        onSuccess(response, { data: response, headers: {}, status: 200, statusText: "OK", request: data });
+                        onSuccess(response, fullResponse);
                 });
             }
         };
@@ -335,14 +368,14 @@ class ApiClass {
                 const returnObj = {
                     onSuccess: (fn) => {
                         call.then((r) => {
-                            fn(r);
+                            fn(r === null || r === void 0 ? void 0 : r.data, r);
                         });
                         return returnObj;
                     },
                     onError: (fn) => {
                         call.then(() => {
                         }, (r) => {
-                            fn(r);
+                            fn(r === null || r === void 0 ? void 0 : r.data, r);
                         });
                         return returnObj;
                     },
@@ -350,7 +383,7 @@ class ApiClass {
                         call.then((r) => {
                             fn(r);
                         }, (r) => {
-                            fn(r);
+                            fn(r === null || r === void 0 ? void 0 : r.data, r);
                         });
                         return returnObj;
                     },
