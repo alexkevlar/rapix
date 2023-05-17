@@ -103,7 +103,7 @@ class ApiClass {
                 if (response === null || response === void 0 ? void 0 : response.status)
                     delete response.status;
                 if (typeof defaultTransform === 'function') {
-                    response = defaultTransform(Object.assign({}, response));
+                    response = defaultTransform(Object.assign({}, original));
                 }
                 if (typeof transformResponse === 'function') {
                     response = transformResponse(Object.assign({}, original), Object.assign({}, response));
@@ -381,7 +381,7 @@ class ApiClass {
                     },
                     always: (fn) => {
                         call.then((r) => {
-                            fn(r);
+                            fn(r === null || r === void 0 ? void 0 : r.data, r);
                         }, (r) => {
                             fn(r === null || r === void 0 ? void 0 : r.data, r);
                         });

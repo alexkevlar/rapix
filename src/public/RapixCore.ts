@@ -625,7 +625,7 @@ export class ApiClass {
           },
           always: (fn: any) => {
             call.then((r: any) => {
-              fn(r);
+              fn(r?.data, r);
             }, (r: any) => {
               fn(r?.data, r);
             })
