@@ -36,7 +36,7 @@ yarn add rapix
 Step 1)<br/>Import library:
 
 ```javascript
-import rapix from "rapix";
+import { rapix } from "rapix";
 ```
 
 <br/>
