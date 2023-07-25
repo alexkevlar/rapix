@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cascade = void 0;
+exports.cascade = exports.rapix = void 0;
 const RapixCore_1 = require("./public/RapixCore");
 function rapix(props) {
     return new RapixCore_1.ApiClass(Object.assign(Object.assign({}, RapixCore_1.APIOptionsDefaults), props)).collection;
 }
+exports.rapix = rapix;
 function cascade(props, callbacks) {
     let countCalls = 0;
     let successes = 0;
@@ -45,4 +46,3 @@ function cascade(props, callbacks) {
     });
 }
 exports.cascade = cascade;
-exports.default = rapix;

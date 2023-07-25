@@ -1,3 +1,4 @@
+import { RapixResponse } from "../index";
 export declare type methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'TRACE' | 'CONNECT';
 interface FailOption {
     type?: string;
@@ -8,8 +9,8 @@ interface FailOption {
     [key: string]: any;
 }
 export declare type DataTypes = Record<string, any> | any;
-declare type ResponseFullData = {
-    data?: any;
+export declare type ResponseFullData<T> = {
+    data: RapixResponse<T>;
     headers: Record<string, any>;
     request: Record<string, any>;
     status: number;
@@ -23,11 +24,11 @@ export interface EndpointOptions {
     };
     body?: DataTypes;
     cacheToClearAfter?: Array<string> | string;
-    onSuccess?: (responseData?: any, response?: ResponseFullData) => void;
+    onSuccess?: (responseData?: any, response?: any) => void;
     retryIf?: (responseData?: any, response?: any) => boolean;
     test?: (data: any) => boolean;
-    always?: (responseData?: any, response?: ResponseFullData) => void;
-    onError?: (error?: any, response?: ResponseFullData) => void;
+    always?: (responseData?: any, response?: any) => void;
+    onError?: (error?: any, response?: any) => void;
     mock?: {
         success?: {
             status?: number;
@@ -42,7 +43,7 @@ export interface EndpointOptions {
     timeout?: number;
     fetchRemote?: boolean;
 }
-interface ConfigOptions {
+export interface ConfigOptions {
     baseURL: string;
     fetchRemote?: boolean;
     headers?: object;

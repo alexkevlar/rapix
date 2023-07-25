@@ -1,5 +1,6 @@
 import ApiCache from "./ApiCache";
 import { traverse } from "traverse-remap";
+import { RapixResponse } from "../index";
 
 
 export type methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'TRACE' | 'CONNECT';
@@ -28,8 +29,9 @@ interface FailOption {
 
 export type DataTypes = Record<string, any> | any;
 
-type ResponseFullData = {
-  data?: any,
+
+export type ResponseFullData<T> = {
+  data: RapixResponse<T>,
   headers: Record<string, any>,
   request: Record<string, any>,
   status: number,
@@ -42,11 +44,11 @@ export interface EndpointOptions {
   headers?: { [key: string]: any },
   body?: DataTypes,
   cacheToClearAfter?: Array<string> | string,
-  onSuccess?: (responseData?: any, response?: ResponseFullData) => void,
+  onSuccess?: (responseData?: any, response?: any) => void,
   retryIf?: (responseData?: any, response?: any) => boolean,
   test?: (data: any) => boolean,
-  always?: (responseData?: any, response?: ResponseFullData) => void,
-  onError?: (error?: any, response?: ResponseFullData) => void,
+  always?: (responseData?: any, response?: any) => void,
+  onError?: (error?: any, response?: any) => void,
   mock?: {
     success?: { status?: number, [key: string]: any },
     fail?: FailOption,
@@ -65,7 +67,7 @@ interface FetchAPIOptions extends EndpointOptions {
   signalCallback?: any
 }
 
-interface ConfigOptions {
+export interface ConfigOptions {
   baseURL: string;
   fetchRemote?: boolean,
   headers?: object,
@@ -102,7 +104,7 @@ const fn = {
       return Math.floor(Math.random() * (max - min + 1) + min)
     }
 
-  }
+  },
 
 }
 
@@ -257,17 +259,17 @@ export class ApiClass {
 
         if (_response?.status) delete _response.status;
 
-        return { _response, _original: JSON.parse(JSON.stringify(response)) }
+        return { _response, __original: JSON.parse(JSON.stringify(response)) }
 
       }
 
 
-      const responseData = (response: DataTypes, isCache: boolean = false, _original: DataTypes) => {
+      const responseData = (response: DataTypes, isCache: boolean = false, __original: DataTypes) => {
 
         const time = new Date();
 
         return {
-          response, _original, ...{
+            response, __original, ...{
             __reqTime: startTime.getTime(),
             __resTime: time.getTime(),
             __ping: time.getTime() - startTime.getTime(),
@@ -315,9 +317,9 @@ export class ApiClass {
 
           Cache.set(url, body, resData, method);
 
-          const { _response, _original } = transformData(resData);
+          const { _response, __original } = transformData(resData);
 
-          let rData = responseData(_response, false, _original);
+          let rData = responseData(_response, false, __original);
           if (debug) console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {
             resource: url,
             endpoint: endPoint,
@@ -403,8 +405,20 @@ export class ApiClass {
               clearTimeout(id);
 
               function parseResponse(response: any) {
-                const _r = response.clone();
-                return requestOptions.headers["Content-Type"] === "application/json" && api_setting.validateStatus(_r.status) ? _r.json() : _r.text();
+
+                return new Promise((resolve, reject) => {
+                  if (response) {
+                    const _r = response.clone();
+                    _r.json().then(() => {
+                      resolve(response.clone().json())
+                    }).catch(() => {
+                      resolve(response.clone().text())
+                    })
+                  } else {
+                    reject({ detail: 'Generic error' });
+                  }
+                })
+
               }
 
               return {
@@ -533,10 +547,10 @@ export class ApiClass {
 
         return new Promise((resolve) => {
 
-          const { _response, _original } = transformData(cache);
-          delete _original.__cacheExp;
+          const { _response, __original } = transformData(cache);
+          delete __original.__cacheExp;
 
-          const response = responseData(_response, true, _original);
+          const response = responseData(_response, true, __original);
 
           const api_setting: any = { ...configOptionsDefaults, ...settings(data) };
           const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
@@ -634,7 +648,11 @@ export class ApiClass {
           abort: () => typeof controller.abort === 'function' ? controller.abort() : () => {
           },
           then: (onSuccess: any, onError: any) => {
-            call.then(onSuccess, onError);
+            call.then((r: any) => {
+              onSuccess(r?.data, r);
+            }, (r: any) => {
+              onError(r?.data, r);
+            });
             return returnObj;
           }
         };

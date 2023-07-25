@@ -32,7 +32,7 @@ const fn = {
         else {
             return Math.floor(Math.random() * (max - min + 1) + min);
         }
-    }
+    },
 };
 const mockFailDefaults = {
     type: "BadRequest",
@@ -108,11 +108,11 @@ class ApiClass {
                 }
                 if (_response === null || _response === void 0 ? void 0 : _response.status)
                     delete _response.status;
-                return { _response, _original: JSON.parse(JSON.stringify(response)) };
+                return { _response, __original: JSON.parse(JSON.stringify(response)) };
             };
-            const responseData = (response, isCache = false, _original) => {
+            const responseData = (response, isCache = false, __original) => {
                 const time = new Date();
-                return Object.assign({ response, _original }, {
+                return Object.assign({ response, __original }, {
                     __reqTime: startTime.getTime(),
                     __resTime: time.getTime(),
                     __ping: time.getTime() - startTime.getTime(),
@@ -143,8 +143,8 @@ class ApiClass {
                     if (cacheToClearAfter.length > 0)
                         Cache.remove(cacheToClearAfter);
                     Cache.set(url, body, resData, method);
-                    const { _response, _original } = transformData(resData);
-                    let rData = responseData(_response, false, _original);
+                    const { _response, __original } = transformData(resData);
+                    let rData = responseData(_response, false, __original);
                     if (debug)
                         console.log(`%c<- ${method}`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, {
                             resource: url,
@@ -215,8 +215,19 @@ class ApiClass {
                             .then((r) => {
                             clearTimeout(id);
                             function parseResponse(response) {
-                                const _r = response.clone();
-                                return requestOptions.headers["Content-Type"] === "application/json" && api_setting.validateStatus(_r.status) ? _r.json() : _r.text();
+                                return new Promise((resolve, reject) => {
+                                    if (response) {
+                                        const _r = response.clone();
+                                        _r.json().then(() => {
+                                            resolve(response.clone().json());
+                                        }).catch(() => {
+                                            resolve(response.clone().text());
+                                        });
+                                    }
+                                    else {
+                                        reject({ detail: 'Generic error' });
+                                    }
+                                });
                             }
                             return {
                                 res: (r && (r === null || r === void 0 ? void 0 : r.status)) ? parseResponse(r) : {
@@ -313,9 +324,9 @@ class ApiClass {
                 if (debug)
                     console.log(`%c${method} ->`, `font-weight: bold; font-size: 12px; color: ${logColors[method]}`, Object.assign({ resource: url }, (body && { body })));
                 return new Promise((resolve) => {
-                    const { _response, _original } = transformData(cache);
-                    delete _original.__cacheExp;
-                    const response = responseData(_response, true, _original);
+                    const { _response, __original } = transformData(cache);
+                    delete __original.__cacheExp;
+                    const response = responseData(_response, true, __original);
                     const api_setting = Object.assign(Object.assign({}, configOptionsDefaults), settings(data));
                     const endPoint = url.indexOf('http') >= 0 ? url : `${api_setting.baseURL}${url}`;
                     if (debug)
@@ -390,7 +401,11 @@ class ApiClass {
                     abort: () => typeof controller.abort === 'function' ? controller.abort() : () => {
                     },
                     then: (onSuccess, onError) => {
-                        call.then(onSuccess, onError);
+                        call.then((r) => {
+                            onSuccess(r === null || r === void 0 ? void 0 : r.data, r);
+                        }, (r) => {
+                            onError(r === null || r === void 0 ? void 0 : r.data, r);
+                        });
                         return returnObj;
                     }
                 };
