@@ -37,6 +37,7 @@ class ApiCache {
                     if (cachedResponse.hasOwnProperty('__cacheExp')) {
                         const now = new Date().getTime();
                         if (cachedResponse.__cacheExp >= now - timeInSeconds * 1000) {
+                            delete cachedResponse.__cacheExp;
                             responseCache = JSON.parse(JSON.stringify(cachedResponse));
                         }
                     }

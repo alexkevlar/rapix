@@ -257,7 +257,7 @@ export class ApiClass {
           _response = transformResponse(_response, JSON.parse(JSON.stringify(response)));
         }
 
-        if (_response?.status) delete _response.status;
+        if (_response?.status && typeof _response.status === "number") delete _response.status;
 
         return { _response, __original: JSON.parse(JSON.stringify(response)) }
 
