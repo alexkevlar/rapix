@@ -79,9 +79,12 @@ export interface ConfigOptions {
   timeout?: number
 }
 
+
+export type EndpointFn = (props?: any, ...rest: any) => EndpointOptions;
+
 export interface APIOptions {
   settings: (params?: any) => ConfigOptions,
-  collection: Record<string, (props?: any) => EndpointOptions>
+  collection: Record<string, EndpointFn>
 }
 
 const fn = {
@@ -440,9 +443,9 @@ export class ApiClass {
             .then(({ res, r }) => {
 
               res.then((content: any) => {
-                handleResponse({ responseData: content, response: r, status: r.status, resolve, reject })
+                handleResponse({ responseData: content, response: r, status: r?.status || 298, resolve, reject })
               }, (content: any) => {
-                handleResponse({ responseData: content, response: {}, status: r.status, resolve, reject })
+                handleResponse({ responseData: content, response: {}, status: r?.status || -1, resolve, reject })
               })
 
             }, (e) => reject({ data: e.data, status: e.status }))

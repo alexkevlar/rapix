@@ -106,7 +106,7 @@ class ApiClass {
                 if (typeof transformResponse === 'function') {
                     _response = transformResponse(_response, JSON.parse(JSON.stringify(response)));
                 }
-                if (_response === null || _response === void 0 ? void 0 : _response.status)
+                if ((_response === null || _response === void 0 ? void 0 : _response.status) && typeof _response.status === "number")
                     delete _response.status;
                 return { _response, __original: JSON.parse(JSON.stringify(response)) };
             };
@@ -246,9 +246,9 @@ class ApiClass {
                         })
                             .then(({ res, r }) => {
                             res.then((content) => {
-                                handleResponse({ responseData: content, response: r, status: r.status, resolve, reject });
+                                handleResponse({ responseData: content, response: r, status: (r === null || r === void 0 ? void 0 : r.status) || 298, resolve, reject });
                             }, (content) => {
-                                handleResponse({ responseData: content, response: {}, status: r.status, resolve, reject });
+                                handleResponse({ responseData: content, response: {}, status: (r === null || r === void 0 ? void 0 : r.status) || -1, resolve, reject });
                             });
                         }, (e) => reject({ data: e.data, status: e.status }));
                     }

@@ -1,4 +1,4 @@
-import { ConfigOptions, EndpointOptions, ResponseFullData } from "./public/RapixCore";
+import { ConfigOptions, EndpointFn, ResponseFullData } from "./public/RapixCore";
 export declare type RapixRichResponse<T> = ResponseFullData<T>;
 export declare type RapixResponse<T> = {
     response: T;
@@ -15,7 +15,6 @@ export interface RapixProps<E> {
     abort: () => {};
     then: (onSuccess?: (data: E, fullResponse: RapixRichResponse<E>) => any, onError?: (data: E, fullResponse: RapixRichResponse<E>) => any) => RapixProps<E>;
 }
-declare type EndpointFn = (props?: any) => EndpointOptions;
 declare type FunctionWithProps<T> = T extends (props: infer P) => any ? <T>(params?: P) => RapixProps<T> : never;
 declare type ResponseMap<C> = {
     [F in keyof C]: FunctionWithProps<C[F]>;

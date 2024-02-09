@@ -1,4 +1,10 @@
-import { ApiClass, APIOptionsDefaults, ConfigOptions, EndpointOptions, ResponseFullData } from "./public/RapixCore";
+import {
+  ApiClass,
+  APIOptionsDefaults,
+  ConfigOptions,
+  EndpointFn,
+  ResponseFullData
+} from "./public/RapixCore";
 
 
 
@@ -21,7 +27,6 @@ export interface RapixProps<E> {
   then: (onSuccess?: (data: E, fullResponse: RapixRichResponse<E>) => any, onError?: (data: E, fullResponse: RapixRichResponse<E>) => any) => RapixProps<E>
 }
 
-type EndpointFn = (props?: any) => EndpointOptions;
 
 type FunctionWithProps<T> = T extends (props: infer P) => any ? <T>(params?: P) => RapixProps<T> : never;
 

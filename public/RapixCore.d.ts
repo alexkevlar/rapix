@@ -54,9 +54,10 @@ export interface ConfigOptions {
     transformResponse?: (r: any) => any;
     timeout?: number;
 }
+export declare type EndpointFn = (props?: any, ...rest: any) => EndpointOptions;
 export interface APIOptions {
     settings: (params?: any) => ConfigOptions;
-    collection: Record<string, (props?: any) => EndpointOptions>;
+    collection: Record<string, EndpointFn>;
 }
 export declare class ApiClass {
     readonly collection: any;
